@@ -1,13 +1,13 @@
 # police
 
-> Big car
-> Movie star
-> Hot tip
-> Go far
-> Blind date
-> Too late
-> Take a bus
-> Don't wait
+> Big car  
+> Movie star  
+> Hot tip  
+> Go far  
+> Blind date  
+> Too late  
+> Take a bus  
+> Don't wait  
 
 Police is declarative authorization library inspired by https://github.com/ryanb/cancan
 It uses clojure multimethods under the hood and is highly experimental
