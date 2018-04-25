@@ -1,21 +1,15 @@
-# police
+# zakon
 
-> Big car  
-> Movie star  
-> Hot tip  
-> Go far  
-> Blind date  
-> Too late  
-> Take a bus  
-> Don't wait  
+> But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
+> (James 1:25)
 
-Police is declarative authorization library inspired by https://github.com/ryanb/cancan
+zakon (rus. закон, law) is declarative authorization library inspired by https://github.com/ryanb/cancan
 It uses clojure multimethods under the hood and is highly experimental
 
 ## Usage
 
 ```clojure
-(:require '[police.core :refer [can! cant! can? any]])
+(:require '[zakon.core :refer [can! cant! can? any]])
 
 (can? :i :go :home) ;; => false
 (can! :i :go :home)

@@ -1,4 +1,4 @@
-(ns police.core)
+(ns zakon.core)
 
 (def any ::any)
 (def global-policy ::policy)
