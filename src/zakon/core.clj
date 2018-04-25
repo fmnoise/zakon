@@ -49,12 +49,12 @@
   (swap! relations derive policy global-policy))
 
 (defn make-kw [v]
-  (let [kw (cond
-             (keyword? v) v
-             (string? v) (keyword v)
-             true (-> v str keyword))
-        nsp (or (namespace kw) (str *ns*))]
-    (keyword nsp (name kw))))
+  (let [[kw ns]
+        (if (keyword? v)
+          [(name v) (or (namespace v) (str *ns*))]
+          [(-> v str (clojure.string/replace #"\s" "-"))
+           (-> v class str (clojure.string/split #"\s") last)])]
+    (keyword ns (name kw))))
 
 (defn inherit!
   [child parent]
@@ -122,19 +122,16 @@
            new-rule# [kw-policy# kw-actor# kw-action# kw-subject#]
            prev-rules# (-> dispatch prefers keys set (conj any))]
        (defmethod dispatch [kw-policy# kw-actor# kw-action# kw-subject#]
-         [~'_ ~'_ ~'_ ~'_]
+         ~'[_ _ _ _]
          {:result ~res
           :source (assoc ~m :ns ~ns)})
-       (if (contains? prev-rules# new-rule#)
-         nil
-         (do
-          (doseq [rule# prev-rules#]
-            (prefer-method dispatch new-rule# rule#))
-          {:policy kw-policy#
-           :actor kw-actor#
-           :action kw-action#
-           :subject kw-subject#
-           :result ~res}))))))
+       (when-not (contains? prev-rules# new-rule#)
+         (doseq [rule# prev-rules#]
+           (prefer-method dispatch new-rule# rule#)))
+       {::policy kw-policy#
+        ::actor kw-actor#
+        ::action kw-action#
+        ::subject kw-subject#}))))
 
 (defmacro can!
   ([actor action subject]
@@ -166,3 +163,14 @@
        ~(with-meta
           `(do ~@body)
           m))))
+
+(defmacro cleanup! []
+  `(do
+     (reset! relations (make-hierarchy))
+     (def ~'dispatch nil)
+     (defmulti ~'dispatch
+       (fn ~'[policy actor action subject] ~'[policy actor action subject])
+       :hierarchy relations)
+     (defmethod ~'dispatch ~'[global-policy any any any]
+       ~'[_ _ _ _] {:result *default-result*
+                    :source ::default-rule})))
