@@ -4,9 +4,11 @@
 > (James 1:25)
 
 zakon (/zakon/ rus. *закон - law*) is declarative authorization library inspired by https://github.com/ryanb/cancan
-It uses clojure multimethods under the hood and is highly experimental
+It has no dependencied (despite clojure itself) and uses clojure multimethods under the hood.Everything is highly experimental.
 
 ## Usage
+
+**Not released to clojars yet**
 
 ```clojure
 (:require '[zakon.core :refer [can! cant! can? any]])
@@ -18,6 +20,8 @@ It uses clojure multimethods under the hood and is highly experimental
 (can? :boss :go :home) ;; => false
 (can? :i :go :home) ;; => true
 ```
+
+More detailed docs and examples soon...
 
 ## License
 
