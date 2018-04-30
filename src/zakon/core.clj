@@ -48,45 +48,56 @@
 (defn- register-policy! [policy]
   (swap! relations derive policy global-policy))
 
-(defn make-kw [v]
-  (let [[kw ns]
-        (if (keyword? v)
-          [(name v) (or (namespace v) (str *ns*))]
-          [(-> v str (clojure.string/replace #"\s" "-"))
-           (-> v class str (clojure.string/split #"\s") last)])]
-    (keyword ns (name kw))))
+(defn- entity-name [v]
+  (if (keyword? v)
+    (name v)
+    (-> v str (clojure.string/replace #"\s" "-"))))
 
-(defn inherit!
-  [child parent]
-  (let [kw-child (make-kw child)
-        kw-parent (make-kw parent)
+(defn build-entity
+  ([value]
+   (let [[kw ns]
+         (if (keyword? value)
+           [(name value) (or (namespace value) (str *ns*))]
+           [(-> value str (clojure.string/replace #"\s" "-"))
+            (-> value class str (clojure.string/split #"\s") last)])]
+     (keyword ns (name kw))))
+  ([domain value]
+   (keyword (entity-name domain) (entity-name value))))
+
+(defn inherit! [child parent]
+  (let [kw-child (build-entity child)
+        kw-parent (build-entity parent)
         _ (when-not (known-entity? kw-parent) (register-entity! kw-parent))]
     (swap! relations derive kw-child kw-parent)))
 
 (defn inherited? [child parent]
-  (let [kw-child (make-kw child)
-        kw-parent (make-kw parent)]
+  (let [kw-child (build-entity child)
+        kw-parent (build-entity parent)]
     (-> @relations
         (descendants kw-parent)
         (contains? kw-child))))
+
+(defn extract [result actor action subject]
+  (cond
+    (ifn? result) (result {:actor actor :action action :subject subject})
+    (instance? clojure.lang.Atom result) (extract @result actor action subject)
+    :else result))
 
 (defn can?
   ([actor action subject]
    (can? *policy* actor action subject))
   ([policy actor action subject]
    (let [[actor' action' subject'] (*dispatcher* actor action subject)
-         kw-actor (make-kw actor')
-         kw-action (make-kw action')
-         kw-subject (make-kw subject')
-         kw-policy (make-kw policy)
+         kw-actor (build-entity actor')
+         kw-action (build-entity action')
+         kw-subject (build-entity subject')
+         kw-policy (build-entity policy)
          _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
          _ (when-not (known-entity? kw-action) (register-entity! kw-action))
          _ (when-not (known-entity? kw-subject) (register-entity! kw-subject))
          _ (when-not (known-policy? kw-policy) (register-policy! kw-policy))
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-     (if (ifn? result)
-       (result [actor action subject])
-       result))))
+     (extract result actor action subject))))
 
 (def cant? (complement can?))
 
@@ -95,10 +106,10 @@
    (find-rule *policy* actor action subject))
   ([policy actor action subject]
    (let [[actor' action' subject'] (*dispatcher* actor action subject)
-         kw-actor (make-kw actor')
-         kw-action (make-kw action')
-         kw-subject (make-kw subject')
-         kw-policy (make-kw policy)
+         kw-actor (build-entity actor')
+         kw-action (build-entity action')
+         kw-subject (build-entity subject')
+         kw-policy (build-entity policy)
          _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
          _ (when-not (known-entity? kw-action) (register-entity! kw-action))
          _ (when-not (known-entity? kw-subject) (register-entity! kw-subject))
@@ -115,10 +126,10 @@
   ([policy [actor action subject] res]
    (let [m (meta &form)
          ns (str *ns*)]
-    `(let [kw-actor# (make-kw ~actor)
-           kw-action# (make-kw ~action)
-           kw-subject# (make-kw ~subject)
-           kw-policy# (make-kw ~policy)
+    `(let [kw-actor# (build-entity ~actor)
+           kw-action# (build-entity ~action)
+           kw-subject# (build-entity ~subject)
+           kw-policy# (build-entity ~policy)
            new-rule# [kw-policy# kw-actor# kw-action# kw-subject#]
            prev-rules# (-> dispatch prefers keys set (conj any))]
        (defmethod dispatch [kw-policy# kw-actor# kw-action# kw-subject#]
