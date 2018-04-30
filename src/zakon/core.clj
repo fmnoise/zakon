@@ -60,7 +60,7 @@
            [(name value) (or (namespace value) (str *ns*))]
            [(-> value str (clojure.string/replace #"\s" "-"))
             (-> value class str (clojure.string/split #"\s") last)])]
-     (keyword ns (name kw))))
+     (keyword ns kw)))
   ([domain value]
    (keyword (entity-name domain) (entity-name value))))
 
