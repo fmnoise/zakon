@@ -17,3 +17,6 @@
 ;; ??? readers
 ;; #policy [[:user :do :stuff true] [:user :do :other false]]
 ;; #rule [:user :do :stuff false]
+
+;; ??? atom with vector of applied rules
+;; ??? remove creating any for each ns
