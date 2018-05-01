@@ -5,7 +5,7 @@
 
 zakon (/zakon/ rus. *закон - law*) is declarative authorization library inspired by https://github.com/ryanb/cancan
 
-It has no dependencied (despite clojure itself) and uses clojure multimethods under the hood.
+It has no dependencies (despite clojure itself) and uses clojure multimethods under the hood.
 
 Everything is highly experimental.
 
