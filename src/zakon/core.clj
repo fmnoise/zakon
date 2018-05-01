@@ -3,23 +3,32 @@
 (def any ::any)
 (def global-policy ::policy)
 (def relations (atom (make-hierarchy)))
+
 (def ^:dynamic *default-result* false)
 (def ^:dynamic *policy* global-policy)
 (def ^:dynamic *actor-dispatcher* identity)
 (def ^:dynamic *action-dispatcher* identity)
 (def ^:dynamic *subject-dispatcher* identity)
 
-(defn ^:dynamic *dispatcher*
-  [actor action subject]
-  [(*actor-dispatcher* actor)
-   (*action-dispatcher* action)
-   (*subject-dispatcher* subject)])
+(defmacro with [options & body]
+  `(binding [*policy* (get ~options :policy *policy*)
+             *default-result* (get ~options :default-result *default-result*)
+             *actor-dispatcher* (get ~options :actor-dispather *actor-dispatcher*)
+             *action-dispatcher* (get ~options :action-dispatcher *action-dispatcher*)
+             *subject-dispatcher* (get ~options :subject-dispatcher *subject-dispatcher*)]
+     ~@body))
 
-(defn set-default-result! [res]
-  (alter-var-root #'*default-result* (constantly res)))
+(defmacro with-dispatchers [dispatchers-map & body]
+  `(binding [*actor-dispatcher* (get ~dispatchers-map :actor *actor-dispatcher*)
+             *action-dispatcher* (get ~dispatchers-map :action *action-dispatcher*)
+             *subject-dispatcher* (get ~dispatchers-map :subject *subject-dispatcher*)]
+     ~@body))
 
-(defn set-dispatcher! [f]
-  (alter-var-root #'*dispatcher* (constantly f)))
+(defmacro with-policy [policy & body]
+  `(binding [*policy* ~policy] ~@body))
+
+(defmacro with-default-result [result & body]
+  `(binding [*default-result* ~result] ~@body))
 
 (defmulti dispatch
   (fn [policy actor action subject] [policy actor action subject])
@@ -87,10 +96,9 @@
   ([actor action subject]
    (can? *policy* actor action subject))
   ([policy actor action subject]
-   (let [[actor' action' subject'] (*dispatcher* actor action subject)
-         kw-actor (build-entity actor')
-         kw-action (build-entity action')
-         kw-subject (build-entity subject')
+   (let [kw-actor (-> actor *actor-dispatcher* build-entity)
+         kw-action (-> action *action-dispatcher* build-entity)
+         kw-subject (-> subject *subject-dispatcher* build-entity)
          kw-policy (build-entity policy)
          _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
          _ (when-not (known-entity? kw-action) (register-entity! kw-action))
@@ -105,10 +113,9 @@
   ([actor action subject]
    (find-rule *policy* actor action subject))
   ([policy actor action subject]
-   (let [[actor' action' subject'] (*dispatcher* actor action subject)
-         kw-actor (build-entity actor')
-         kw-action (build-entity action')
-         kw-subject (build-entity subject')
+   (let [kw-actor (-> actor *actor-dispatcher* build-entity)
+         kw-action (-> action *action-dispatcher* build-entity)
+         kw-subject (-> subject *subject-dispatcher* build-entity)
          kw-policy (build-entity policy)
          _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
          _ (when-not (known-entity? kw-action) (register-entity! kw-action))
@@ -167,13 +174,6 @@
      `~(with-meta
          `(defrule ~policy [~actor ~action ~subject] false)
          m))))
-
-(defmacro with-policy [policy & body]
-  (let [m (meta &form)]
-    `(binding [*policy* ~policy]
-       ~(with-meta
-          `(do ~@body)
-          m))))
 
 (defmacro cleanup! []
   `(do
