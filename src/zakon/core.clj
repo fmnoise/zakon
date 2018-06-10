@@ -10,7 +10,14 @@
 (def ^:dynamic *action-dispatcher* identity)
 (def ^:dynamic *subject-dispatcher* identity)
 
-(defmacro with [options & body]
+(defmacro with
+  "Executes body with the given options. Options is a map with following keys
+  :policy - specifies policy for dispatching rules
+  :default-result - specifies default result when no matching rules found
+  :actor-dispatcher - specifies dispatcher for actor
+  :action-dispatcher - specifies dispatcher for action
+  :subject-dispatcher - specifies dispatcher for subject"
+  [options & body]
   `(binding [*policy* (get ~options :policy *policy*)
              *default-result* (get ~options :default-result *default-result*)
              *actor-dispatcher* (get ~options :actor-dispather *actor-dispatcher*)
@@ -18,23 +25,31 @@
              *subject-dispatcher* (get ~options :subject-dispatcher *subject-dispatcher*)]
      ~@body))
 
-(defmacro with-dispatchers [dispatchers-map & body]
+(defmacro with-dispatchers
+  "Executes body with given dispatchers. Dispatchers map may contain :actor, :action and :subject"
+  [dispatchers-map & body]
   `(binding [*actor-dispatcher* (get ~dispatchers-map :actor *actor-dispatcher*)
              *action-dispatcher* (get ~dispatchers-map :action *action-dispatcher*)
              *subject-dispatcher* (get ~dispatchers-map :subject *subject-dispatcher*)]
      ~@body))
 
-(defmacro with-policy [policy & body]
+(defmacro with-policy
+  "Executes body against given policy"
+  [policy & body]
   `(binding [*policy* ~policy] ~@body))
 
-(defmacro with-default-result [result & body]
+(defmacro with-default-result
+  "Executes body returning given default result if no matching rules found"
+  [result & body]
   `(binding [*default-result* ~result] ~@body))
 
 (defmulti dispatch
+  "Base method for rules dispatching. Should not be used directly until you know what you're doing"
   (fn [policy actor action subject] [policy actor action subject])
   :hierarchy relations)
 
-(defmethod dispatch [global-policy any any any]
+(defmethod dispatch
+  [global-policy any any any]
   [_ _ _ _] {:result *default-result*
              :source ::default-rule})
 
@@ -63,6 +78,7 @@
     (-> v str (clojure.string/replace #"\s" "-"))))
 
 (defn build-entity
+  "Service method used to build entity from given value. Should not be used directly"
   ([value]
    (let [[kw ns]
          (if (keyword? value)
@@ -73,26 +89,31 @@
   ([domain value]
    (keyword (entity-name domain) (entity-name value))))
 
-(defn inherit! [child parent]
+(defn inherit!
+  "Build child-parent relation"
+  [child parent]
   (let [kw-child (build-entity child)
         kw-parent (build-entity parent)
         _ (when-not (known-entity? kw-parent) (register-entity! kw-parent))]
     (swap! relations derive kw-child kw-parent)))
 
-(defn inherited? [child parent]
+(defn inherited?
+  "Checks if given values are in child-parent relation"
+  [child parent]
   (let [kw-child (build-entity child)
         kw-parent (build-entity parent)]
     (-> @relations
         (descendants kw-parent)
         (contains? kw-child))))
 
-(defn extract [result actor action subject]
+(defn- extract [result actor action subject]
   (cond
     (ifn? result) (result {:actor actor :action action :subject subject})
     (instance? clojure.lang.Atom result) (extract @result actor action subject)
     :else result))
 
 (defn can?
+  "Checks if actor can do action on subject"
   ([actor action subject]
    (can? *policy* actor action subject))
   ([policy actor action subject]
@@ -107,9 +128,13 @@
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      (extract result actor action subject))))
 
-(def cant? (complement can?))
+(def cant?
+  "Checks if actor can't do action on subject"
+  (complement can?))
 
 (defn find-rule
+  "Looks up for rule with given action, action and subject and return coordinates where it's declared.
+  Can accept policy as first agrument, otherwise performs rule lookup against default policy"
   ([actor action subject]
    (find-rule *policy* actor action subject))
   ([policy actor action subject]
@@ -125,6 +150,10 @@
      source)))
 
 (defmacro defrule
+  "Defines rule for given vector of [actor action subject] and result.
+  Can accept policy as first param, otherwise uses default policy.
+  Result can be arbitrary value, function or atom.
+  Takes the precedence of any previously defined rules in case of conflict."
   ([rule res]
    (let [m (meta &form)]
      `~(with-meta
@@ -152,6 +181,7 @@
         ::subject kw-subject#}))))
 
 (defmacro can!
+  "Defines allowing rule for given actor, action and subject. Can accept policy as first param, otherwise uses default policy."
   ([actor action subject]
    (let [m (meta &form)]
      `~(with-meta
@@ -164,6 +194,7 @@
          m))))
 
 (defmacro cant!
+  "Defines declining rule for given actor, action and subject. Can accept policy as first param, otherwise uses default policy."
   ([actor action subject]
    (let [m (meta &form)]
      `~(with-meta
@@ -175,7 +206,9 @@
          `(defrule ~policy [~actor ~action ~subject] false)
          m))))
 
-(defmacro cleanup! []
+(defmacro cleanup!
+  "Cleanup all rules and relations. Reset everything to initial state."
+  []
   `(do
      (reset! relations (make-hierarchy))
      (def ~'dispatch nil)
