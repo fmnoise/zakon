@@ -42,9 +42,14 @@ In some cases we need to specify kind of wildcard in rule, for example "admin ca
 (can! :admin any :content)
 (can? :admin :create :content) => true
 (can? :admin :delete :content) => true
+
+(can! :admin any any)
+(can? :admin :create :profile) => true
+(can? :admin :upload :file) => true
 ```
 `any` can be also used in rules test:
 ```clojure
+(can? :admin any any) => true
 (can? any any any) => false
 ```
 Rules have a priority, in case of conflict last applied rule always wins:
