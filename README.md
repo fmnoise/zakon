@@ -36,7 +36,7 @@ The opposite effect can be achieved with `cant!`:
 (cant? :user :create :content) => false
 (cant? :user :delete :content) => true
 ```
-In some cases we need to specify kind of wildcard in rule, for example "admin can do anything with content".
+In some cases kind of wildcard should be specified in the rule, for example "admin can do anything with content" (action is a wildcard).
 `any` can be used to wildcard actor, action or subject in any combinations:
 ```clojure
 (can! :admin any :content)
