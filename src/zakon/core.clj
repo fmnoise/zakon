@@ -110,7 +110,7 @@
   (cond
     (ifn? result) (result {:actor actor :action action :subject subject})
     (instance? clojure.lang.Atom result) (extract @result actor action subject)
-    :else result))
+    :else (boolean result)))
 
 (defn can?
   "Checks if actor can do action on subject"
