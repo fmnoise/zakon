@@ -206,15 +206,14 @@
          `(defrule ~policy [~actor ~action ~subject] false)
          m))))
 
-(defmacro cleanup!
+(defn cleanup!
   "Cleanup all rules and relations. Reset everything to initial state."
   []
-  `(do
-     (reset! relations (make-hierarchy))
-     (def ~'dispatch nil)
-     (defmulti ~'dispatch
-       (fn ~'[policy actor action subject] ~'[policy actor action subject])
-       :hierarchy relations)
-     (defmethod ~'dispatch ~'[global-policy any any any]
-       ~'[_ _ _ _] {:result *default-result*
-                    :source ::default-rule})))
+  (reset! relations (make-hierarchy))
+  (def dispatch nil)
+  (defmulti dispatch
+    (fn [policy actor action subject] [policy actor action subject])
+    :hierarchy relations)
+  (defmethod dispatch [global-policy any any any]
+    [_ _ _ _] {:result *default-result*
+               :source ::default-rule}))
