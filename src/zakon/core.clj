@@ -218,11 +218,13 @@
 (defn cleanup!
   "Cleanup all rules and relations. Reset everything to initial state."
   []
-  (reset! relations (make-hierarchy))
-  (def dispatch nil)
-  (defmulti dispatch
-    (fn [policy actor action subject] [policy actor action subject])
-    :hierarchy relations)
-  (defmethod dispatch [global-policy any any any]
-    [_ _ _ _] {:result *default-result*
-               :source ::default-rule}))
+  (let [rules (-> (list-rules) count)]
+    (reset! relations (make-hierarchy))
+    (def dispatch nil)
+    (defmulti dispatch
+      (fn [policy actor action subject] [policy actor action subject])
+      :hierarchy relations)
+    (defmethod dispatch [global-policy any any any]
+      [_ _ _ _] {:result *default-result*
+                 :source ::default-rule})
+    (println rules " rules cleaned")))
