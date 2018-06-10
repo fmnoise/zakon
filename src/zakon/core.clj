@@ -107,8 +107,11 @@
         (contains? kw-child))))
 
 (defn- extract [result actor action subject]
+  ;; find workaround to dispatch multimethods
   (cond
-    (ifn? result) (result {:actor actor :action action :subject subject})
+    (fn? result) (-> {:actor actor :action action :subject subject}
+                     result
+                     (extract actor action subject))
     (instance? clojure.lang.Atom result) (extract @result actor action subject)
     :else (boolean result)))
 
