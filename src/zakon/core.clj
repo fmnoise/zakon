@@ -152,6 +152,12 @@
          {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      source)))
 
+(defn list-rules []
+  ;; add policy param
+  (-> dispatch
+      methods
+      keys))
+
 (defmacro defrule
   "Defines rule for given vector of [actor action subject] and result.
   Can accept policy as first param, otherwise uses default policy.
