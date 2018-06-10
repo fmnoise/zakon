@@ -61,7 +61,7 @@ Rules have a priority, in case of conflict last applied rule always wins:
 (can! :user :delete :content)
 (can? :user :delete :content) => true
 ```
-Sometimes rules are ambigious by design  "user can do anything with content, but user cannot delete anything".
+Sometimes rules are ambigious by design, e.g. "user can do anything with content, but user cannot delete anything".
 Can user delete content? Probably not, as statement about deletion restriction is last and works as clarification.
 ```clojure
 (can! :user any :content)
