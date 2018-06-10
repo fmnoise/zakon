@@ -80,7 +80,7 @@ Can user delete content in such case? Probably yes.
 (find-rule :user :delete :content) => {:line 4, :column 1, :ns "user"}
 (find-rule any :delete :content) => :zakon.core/default-rule
 ```
-`can!` and `cant!` allow for only simple boolean result returned. For more complex cases, `defrule` should be used.
+`can!` and `cant!` are suitable for specifying only simple boolean result, which is enough for simple cases. For more complex one, `defrule` should be used.
 In the following example atom is used to store result:
 ```clojure
 (def content-deletion-allowed (atom true))
