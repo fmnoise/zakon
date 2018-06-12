@@ -80,7 +80,7 @@ Can user delete content in such case? Probably yes.
 (find-rule :user :delete :content) => {:line 4, :column 1, :ns "user"}
 (find-rule any :delete :content) => :zakon.core/default-rule
 ```
-`can!` and `cant!` are suitable for specifying only simple boolean result, which is enough for simple cases. For more complex one, `defrule` should be used.
+`can!` and `cant!` are suitable for specifying only simple boolean result, which is enough for simple cases. For more complex ones, `defrule` should be used. `defrule` supports specifying both simple values and resolvers - atoms and fns(which return true for fn?) to dispatch rule.
 In the following example atom is used to store result:
 ```clojure
 (def content-deletion-allowed (atom true))
@@ -89,7 +89,7 @@ In the following example atom is used to store result:
 (swap! content-deletion-allowed not)
 (can? :user :delete :content) => false
 ```
-In addition to atom, 1-arity function can be also used as result in `defrule`. A map with keys `:actor`, `:action` and `:subject` will be passed to function:
+Function which is used as resolver should accept single argument, a map with keys `:actor`, `:action` and `:subject` will be passed to it:
 ```clojure
 (def user-types #{:content :comment})
 (defrule [:user :create any] (fn [{:keys [subject]}] (user-types subject)))
@@ -97,6 +97,14 @@ In addition to atom, 1-arity function can be also used as result in `defrule`. A
 (can? :user :create :comment) => true
 (can? :user :create :share) => false
 ```
+In order to keep things clean `can?` and `cant?` always return boolean result, so there's no need to do conversion manually:
+```clojure
+(defrule [:admin :delete :profile] 1)
+(defrule [:user :delete :profile] nil)
+(can? :admin :delete :profile) => true
+(can? :user :delete :profile) => false
+```
+
 `cleanup!` cleans up all defined rules and prints cleaned rules count to stdout
 
 ### Entities
