@@ -106,13 +106,13 @@
         (descendants kw-parent)
         (contains? kw-child))))
 
-(defn- extract [result actor action subject]
+(defn- -resolve [result actor action subject]
   ;; find workaround to dispatch multimethods
   (cond
     (fn? result) (-> {:actor actor :action action :subject subject}
                      result
-                     (extract actor action subject))
-    (instance? clojure.lang.Atom result) (extract @result actor action subject)
+                     (-resolve actor action subject))
+    (instance? clojure.lang.Atom result) (-resolve @result actor action subject)
     :else (boolean result)))
 
 (defn can?
@@ -129,7 +129,7 @@
          _ (when-not (known-entity? kw-subject) (register-entity! kw-subject))
          _ (when-not (known-policy? kw-policy) (register-policy! kw-policy))
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-     (extract result actor action subject))))
+     (-resolve result actor action subject))))
 
 (def cant?
   "Checks if actor can't do action on subject"
