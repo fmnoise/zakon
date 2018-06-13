@@ -130,7 +130,7 @@ Function which is used as resolver should accept single argument - map with keys
 
 **Important! Only functions which return `true` for `fn?` can be used as resolvers at the moment(so no multimethods) but things may be changed in future**
 
-In order to keep things predictable `can?` and `cant?` always return boolean result, so there's no need to do conversion manually in `defrule` or resolver :
+In order to keep things predictable `can?` and `cant?` always return boolean result, so there's no need to do conversion manually in `defrule` or resolver:
 ```clojure
 (defrule [:admin :delete :profile] 1)
 (defrule [:user :delete :profile] nil)
@@ -146,7 +146,7 @@ Actor, action and subject values are **entities**. In the examples above we used
 (can? 1 + 2) => true
 ```
 Values which are not keywords are converted into keywords automatically, e.g. in the example above `1` becomes `:java.lang.Long\1` and `+` becomes `:clojure.core$_PLUS_/clojure.core$_PLUS_@5d3882cf`.
-Each entity represents a domain, which is keyword's namespace(or current namespace if keyword is non-qualified).
+Each entity belongs to domain, which is keyword's namespace(or current namespace if keyword is non-qualified).
 Each domain have special value `any` which represents domain root object. All domain entities are inherited from domain root:
 ```clojure
 (can! :java.lang.Long/any + :java.lang.Long/any)
@@ -171,11 +171,13 @@ Entities hierarchy is stored in atom called `relations`:
 `inherited?` can be used to check if 2 enities are in child-parent relations:
 ```clojure
 (inherited? :role/admin :role/user) => true
+(inherited? :http/get :http/any) => true
+(inherited? :http/any any) => true
 ```
 
 ### Dispatchers
 
-Let's say we want to create rule which allows to create content which has type `:acticle` for any user, and allow do anything to user with role `:admin`. User and content are respresented as records.
+Let's say we want to create rule which allows to create content with type `:acticle` for any user, and allow do anything to user with role `:admin`. User and content are respresented as records.
 ```clojure
 (defrecord User [role])
 (defrecord Content [type])
@@ -183,7 +185,7 @@ Let's say we want to create rule which allows to create content which has type `
 (def admin (->User :admin))
 (def topic (->Content :topic))
 ```
-Despite any value can be an entity, that doesn't have a lot of practical sense to write rule like this:
+Despite any value can be an entity, that's impractical to write rule like this:
 ```clojure
 (defrule [any any any]
   (fn [{:keys [actor action subject]}]
@@ -193,17 +195,16 @@ Despite any value can be an entity, that doesn't have a lot of practical sense t
 
 (can? admin :create topic) => true
 ```
-That works, but such rules are very wide and resolver function quickly become cumbersome.
-**Dispatchers** should be used to map values into entities and rule from example above can be rewritten as:
-```
+Such rules are very generic and resolver function quickly becomes cumbersome.
+**Dispatchers** allow to separate rule declaration and getting data required for rule checking from application objects. Dispatcher is a function which will be applied to object to extract entity.
+So rule from example above can be rewritten using dispatchers:
+```clojure
 (can! :user :create :article)
 (can! :admin any any)
 
 (with-dispatchers {:actor :role :subject :type}
   (can? admin :create topic)) => true
 ```
-Dispatcher is just a function which will be applied to object to extract entity.
-Dispatchers allow to separate rule declaration and extracting required data from applocation objects.
 
 ### Policies
 
