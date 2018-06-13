@@ -7,7 +7,7 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 
 It has no dependencies (despite clojure itself) and uses clojure multimethods under the hood.
 
-Everything is highly experimental.
+Everything is highly experimental. You're warned.
 
 ## Usage
 
@@ -19,7 +19,7 @@ Everything is highly experimental.
 
 ### Rules
 
-The core concept of `zakon` is rule - a combination of actor(who performs action), action(what is performed), subject(on which action is performed) and result.
+The core concept of `zakon` is **rule** - a combination of **actor**(who performs action), **action**(what is performed), **subject**(on which action is performed) and associated result, which represents the answer to question "can this actor do this action on this subject?".
 So textual rule "user can create content", can be written as:
 ```clojure
 (can! :user :create :content)
@@ -36,7 +36,21 @@ The opposite effect can be achieved with `cant!`:
 (cant? :user :create :content) => false
 (cant? :user :delete :content) => true
 ```
-In some cases kind of wildcard should be specified in the rule, for example "admin can do anything with content" (action is a wildcard).
+Rules have a priority, in case of conflict last applied rule always wins:
+```clojure
+(can! :user :delete :content)
+(can? :user :delete :content) => true
+(cant! :user :delete :content)
+(can? :user :delete :content) => false
+(can! :user :delete :content)
+(can? :user :delete :content) => true
+```
+
+`cleanup!` cleans up all defined rules and prints cleaned rules count to stdout
+
+### Wildcards
+
+In some cases kind of wildcard should be specified in the rule, for example "admin can do anything with content" (action is a wildcard - anything).
 `any` can be used to wildcard actor, action or subject in any combinations:
 ```clojure
 (can! :admin any :content)
@@ -52,35 +66,51 @@ In some cases kind of wildcard should be specified in the rule, for example "adm
 (can? :admin any any) => true
 (can? any any any) => false
 ```
-Rules have a priority, in case of conflict last applied rule always wins:
-```clojure
-(can! :user :delete :content)
-(can? :user :delete :content) => true
-(cant! :user :delete :content)
-(can? :user :delete :content) => false
-(can! :user :delete :content)
-(can? :user :delete :content) => true
-```
-Sometimes rules are ambigious by design, e.g. "user can do anything with content, but user cannot delete anything".
-Can user delete content? Probably not, as statement about deletion restriction is last and works as clarification.
+Rules with wildcards may sound ambigious, e.g. "user can do anything with content, but user cannot delete anything".
+Can user delete content? From zakon's point of view it can't, as statement about deletion restriction is last and works as clarification.
 ```clojure
 (can! :user any :content)
 (cant! :user :delete any)
 (can? :user :delete :content) => false
 ```
-Let's rephrase last sentence - "user cannot delete anything, but can do anything with content".
-Can user delete content in such case? Probably yes.
+The same logic works if we swap last sentence parts - "user cannot delete anything, but can do anything with content".
 ```clojure
 (cant! :user :delete any)
 (can! :user any :content)
 (can? :user :delete :content) => true
 ```
-`find-rule` can be used to find out which rule was used:
+
+### Default rule
+
+The in example above, restricting part is redundant, because of zakon is restrictive by default (everything which is not specified as allowed, is restricted).
+So initially there's only **default rule** defined using wildcards and equivalent to:
+```clojure
+(cant! any any any)
+```
+If we dispatch rule that was not yet defined, this default one will be used instead.
+If target system should be not restrictive by default(everything which is not specified as restricted, is allowed), that can be either redefined globally:
+```clojure
+(can! any any any)
+```
+or locally using `with-default-result`:
+```clojure
+(with-default-result true
+ (can? any any any)) => true
+```
+
+### Debugging rules
+
+With all that wildcards and defaults ambiguity, it can be hard to understand which rule was dispatched for given arguments.
+`find-rule` can be used to debug rule:
 ```clojure
 (find-rule :user :delete :content) => {:line 4, :column 1, :ns "user"}
 (find-rule any :delete :content) => :zakon.core/default-rule
 ```
-`can!` and `cant!` are suitable for specifying only simple boolean result, which is enough for simple cases. For more complex ones, `defrule` should be used. `defrule` supports specifying both simple values and resolvers - atoms and fns(which return true for fn?) to dispatch rule.
+
+### Resolvers
+
+`can!` and `cant!` are suitable for specifying only simple boolean result, which is enough for simple cases.
+For more complex ones, `defrule` should be used. `defrule` supports specifying both simple values and **resolvers** - atoms and fns to dispatch rule.
 In the following example atom is used to store result:
 ```clojure
 (def content-deletion-allowed (atom true))
@@ -89,7 +119,7 @@ In the following example atom is used to store result:
 (swap! content-deletion-allowed not)
 (can? :user :delete :content) => false
 ```
-Function which is used as resolver should accept single argument, a map with keys `:actor`, `:action` and `:subject` will be passed to it:
+Function which is used as resolver should accept single argument - map with keys `:actor`, `:action` and `:subject`:
 ```clojure
 (def user-types #{:content :comment})
 (defrule [:user :create any] (fn [{:keys [subject]}] (user-types subject)))
@@ -97,7 +127,10 @@ Function which is used as resolver should accept single argument, a map with key
 (can? :user :create :comment) => true
 (can? :user :create :share) => false
 ```
-In order to keep things clean `can?` and `cant?` always return boolean result, so there's no need to do conversion manually:
+
+**Important! Only functions which return `true` for `fn?` can be used as resolvers at the moment(so no multimethods) but things may be changed in future**
+
+In order to keep things predictable `can?` and `cant?` always return boolean result, so there's no need to do conversion manually in `defrule` or resolver :
 ```clojure
 (defrule [:admin :delete :profile] 1)
 (defrule [:user :delete :profile] nil)
@@ -105,11 +138,86 @@ In order to keep things clean `can?` and `cant?` always return boolean result, s
 (can? :user :delete :profile) => false
 ```
 
-`cleanup!` cleans up all defined rules and prints cleaned rules count to stdout
-
 ### Entities
+
+Actor, action and subject values are **entities**. In the examples above we used keywords, but any other value can also be an entity.
+```clojure
+(can! 1 + 2)
+(can? 1 + 2) => true
+```
+Values which are not keywords are converted into keywords automatically, e.g. in the example above `1` becomes `:java.lang.Long\1` and `+` becomes `:clojure.core$_PLUS_/clojure.core$_PLUS_@5d3882cf`.
+Each entity represents a domain, which is keyword's namespace(or current namespace if keyword is non-qualified).
+Each domain have special value `any` which represents domain root object. All domain entities are inherited from domain root:
+```clojure
+(can! :java.lang.Long/any + :java.lang.Long/any)
+(can? 3 + 4) => true
+```
+As shown above `any` can be used as wildcard for defining rules, so it's root object for all other entities and all domain roots are inherited from `any`.
+`inherit!` can be used to make child-parent relation for any other object:
+```clojure
+(inherit! :role/admin :role/user)
+(can! :role/user  :http/get :routes/home)
+(can! :role/admin :http/any :routes/admin)
+
+(can? :role/admin :http/get :routes/home)  => true
+(can? :role/admin :http/get :routes/admin) => true
+(can? :role/user  :http/get :routes/admin) => false
+```
+Entities hierarchy is stored in atom called `relations`:
+```clojure
+@relations
+=> {:parents {:role/any #{:zakon.core/any}, :role/user #{:role/any}, :role/admin #{:role/user}, :http/any #{:zakon.core/any}, :http/get #{:http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any}, :routes/admin #{:routes/any}}, :ancestors {:role/any #{:zakon.core/any}, :role/user #{:zakon.core/any :role/any}, :role/admin #{:zakon.core/any :role/user :role/any}, :http/any #{:zakon.core/any}, :http/get #{:zakon.core/any :http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any :zakon.core/any}, :routes/admin #{:routes/any :zakon.core/any}}, :descendants {:zakon.core/any #{:routes/any :http/any :routes/home :role/user :role/admin :role/any :http/get :routes/admin}, :role/any #{:role/user :role/admin}, :role/user #{:role/admin}, :http/any #{:http/get}, :routes/any #{:routes/home :routes/admin}}}
+```
+`inherited?` can be used to check if 2 enities are in child-parent relations:
+```clojure
+(inherited? :role/admin :role/user) => true
+```
+
 ### Dispatchers
+
+Let's say we want to create rule which allows to create content which has type `:acticle` for any user, and allow do anything to user with role `:admin`. User and content are respresented as records.
+```clojure
+(defrecord User [role])
+(defrecord Content [type])
+
+(def admin (->User :admin))
+(def topic (->Content :topic))
+```
+Despite any value can be an entity, that doesn't have a lot of practical sense to write rule like this:
+```clojure
+(defrule [any any any]
+  (fn [{:keys [actor action subject]}]
+    (or (and (= action :create)
+             (= (:type subject) :article))
+        (= (:role actor) :admin))))
+
+(can? admin :create topic) => true
+```
+That works, but such rules are very wide and resolver function quickly become cumbersome.
+**Dispatchers** should be used to map values into entities and rule from example above can be rewritten as:
+```
+(can! :user :create :article)
+(can! :admin any any)
+
+(with-dispatchers {:actor :role :subject :type}
+  (can? admin :create topic)) => true
+```
+Dispatcher is just a function which will be applied to object to extract entity.
+Dispatchers allow to separate rule declaration and extracting required data from applocation objects.
+
 ### Policies
+
+Rule sets can be kept isolated from each other in scope of **policy**.
+Policies can contain the same rules with different values, for example:
+```clojure
+(cant! :policy/restrictive :user any any)
+(can! :policy/permissive :user any any)
+
+(can? :policy/restrictive :user :say :hello) => false
+(can? :policy/permissive :user :say :hello) => true
+```
+To specify policy for rule definition or rule checking, it should be passed as first agrument.
+All policies are inherited from :zakon.core/policy. If specified policy can't dispatch rule, :zakon.core/policy will be used.
 
 ## License
 
