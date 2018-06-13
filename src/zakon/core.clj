@@ -54,23 +54,29 @@
              :source ::default-rule})
 
 (defn- known-entity? [entity]
-  (or (= entity any)
-      (contains? (descendants @relations any) entity)))
+  (isa? @relations entity any))
 
 (defn- known-policy? [policy]
-  (or (= policy global-policy)
-      (contains? (descendants @relations global-policy) policy)))
+  (isa? @relations policy global-policy))
 
-(defn- register-entity! [entity]
-  (let [ns (namespace entity)
-        str-any (name any)
-        entity-any (keyword ns str-any)]
-    (when-not (known-entity? entity-any)
-      (swap! relations derive entity-any any))
-    (swap! relations derive entity entity-any)))
+(defn register-entity!
+  "Service method used to build entity relations. Should not be used directly"
+  [entity]
+  (when-not (known-entity? entity)
+    (let [ns (namespace entity)
+          str-any (name any)
+          entity-any (keyword ns str-any)]
+      (when-not (known-entity? entity-any)
+        (swap! relations derive entity-any any))
+      (swap! relations derive entity entity-any)))
+  entity)
 
-(defn- register-policy! [policy]
-  (swap! relations derive policy global-policy))
+(defn register-policy!
+  "Service method used to build policy relations. Should not be used directly"
+  [policy]
+  (when-not (known-policy? policy)
+    (swap! relations derive policy global-policy))
+  policy)
 
 (defn- entity-name [v]
   (if (keyword? v)
@@ -93,8 +99,9 @@
   "Build child-parent relation"
   [child parent]
   (let [kw-child (build-entity child)
-        kw-parent (build-entity parent)
-        _ (when-not (known-entity? kw-parent) (register-entity! kw-parent))]
+        kw-parent (build-entity parent)]
+    (when-not (or (known-entity? kw-parent) (known-policy? kw-parent))
+      (register-entity! kw-parent))
     (swap! relations derive kw-child kw-parent)))
 
 (defn inherited?
@@ -102,9 +109,7 @@
   [child parent]
   (let [kw-child (build-entity child)
         kw-parent (build-entity parent)]
-    (-> @relations
-        (descendants kw-parent)
-        (contains? kw-child))))
+    (isa? @relations kw-child kw-parent)))
 
 (defn- -resolve [result actor action subject]
   ;; find workaround to dispatch multimethods
@@ -120,14 +125,10 @@
   ([actor action subject]
    (can? *policy* actor action subject))
   ([policy actor action subject]
-   (let [kw-actor (-> actor *actor-dispatcher* build-entity)
-         kw-action (-> action *action-dispatcher* build-entity)
-         kw-subject (-> subject *subject-dispatcher* build-entity)
-         kw-policy (build-entity policy)
-         _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
-         _ (when-not (known-entity? kw-action) (register-entity! kw-action))
-         _ (when-not (known-entity? kw-subject) (register-entity! kw-subject))
-         _ (when-not (known-policy? kw-policy) (register-policy! kw-policy))
+   (let [kw-actor (-> actor *actor-dispatcher* build-entity register-entity!)
+         kw-action (-> action *action-dispatcher* build-entity register-entity!)
+         kw-subject (-> subject *subject-dispatcher* build-entity register-entity!)
+         kw-policy (-> policy build-entity register-policy!)
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      (-resolve result actor action subject))))
 
@@ -141,14 +142,10 @@
   ([actor action subject]
    (find-rule *policy* actor action subject))
   ([policy actor action subject]
-   (let [kw-actor (-> actor *actor-dispatcher* build-entity)
-         kw-action (-> action *action-dispatcher* build-entity)
-         kw-subject (-> subject *subject-dispatcher* build-entity)
-         kw-policy (build-entity policy)
-         _ (when-not (known-entity? kw-actor) (register-entity! kw-actor))
-         _ (when-not (known-entity? kw-action) (register-entity! kw-action))
-         _ (when-not (known-entity? kw-subject) (register-entity! kw-subject))
-         _ (when-not (known-policy? kw-policy) (register-policy! kw-policy))
+   (let [kw-actor (-> actor *actor-dispatcher* build-entity register-entity!)
+         kw-action (-> action *action-dispatcher* build-entity register-entity!)
+         kw-subject (-> subject *subject-dispatcher* build-entity register-entity!)
+         kw-policy (-> policy build-entity register-policy!)
          {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      source)))
 
@@ -171,23 +168,23 @@
   ([policy [actor action subject] res]
    (let [m (meta &form)
          ns (str *ns*)]
-    `(let [kw-actor# (build-entity ~actor)
-           kw-action# (build-entity ~action)
-           kw-subject# (build-entity ~subject)
-           kw-policy# (build-entity ~policy)
-           new-rule# [kw-policy# kw-actor# kw-action# kw-subject#]
-           prev-rules# (-> dispatch prefers keys set (conj any))]
-       (defmethod dispatch [kw-policy# kw-actor# kw-action# kw-subject#]
-         ~'[_ _ _ _]
-         {:result ~res
-          :source (assoc ~m :ns ~ns)})
-       (when-not (contains? prev-rules# new-rule#)
-         (doseq [rule# prev-rules#]
-           (prefer-method dispatch new-rule# rule#)))
-       {::policy kw-policy#
-        ::actor kw-actor#
-        ::action kw-action#
-        ::subject kw-subject#}))))
+     `(let [kw-actor# (-> ~actor build-entity register-entity!)
+            kw-action# (-> ~action build-entity register-entity!)
+            kw-subject# (-> ~subject build-entity register-entity!)
+            kw-policy# (-> ~policy build-entity register-policy!)
+            new-rule# [kw-policy# kw-actor# kw-action# kw-subject#]
+            prev-rules# (-> dispatch prefers keys set (conj any))]
+        (defmethod dispatch [kw-policy# kw-actor# kw-action# kw-subject#]
+          ~'[_ _ _ _]
+          {:result ~res
+           :source (assoc ~m :ns ~ns)})
+        (when-not (contains? prev-rules# new-rule#)
+          (doseq [rule# prev-rules#]
+            (prefer-method dispatch new-rule# rule#)))
+        {::policy kw-policy#
+         ::actor kw-actor#
+         ::action kw-action#
+         ::subject kw-subject#}))))
 
 (defmacro can!
   "Defines allowing rule for given actor, action and subject. Can accept policy as first param, otherwise uses default policy."
