@@ -5,7 +5,7 @@
 
 zakon (/zakon/ rus. *закон - law*) is declarative authorization library inspired by https://github.com/ryanb/cancan
 
-It has no dependencies (despite clojure itself) and uses clojure multimethods under the hood.
+It has no dependencies (despite clojure itself) and uses clojure multimethods and hierarchies under the hood.
 
 Everything is highly experimental. You're warned.
 
@@ -220,11 +220,11 @@ So rule from example above can be rewritten using context:
 Rule sets can be kept isolated from each other in scope of **policy**.
 Policies can contain the same rules with different values, for example:
 ```clojure
-;; in rule definition policy is passed as first argument
+;; policy is passed as first argument when definind rule
 (cant! :restrictive-policy :user any any)
 (can! :permissive-policy :user any any)
 
-;; in rule check policy is passed as options similar to context
+;; when checking rule, policy is passed as options similarly to context
 (can? :user :say :hello {:policy :restrictive-policy}) => false
 (can? :user :say :hello {:policy :permissive-policy}) => true
 
