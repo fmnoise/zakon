@@ -13,24 +13,22 @@
 (defmacro with
   "Executes body with the given options. Options is a map with following keys
   :policy - specifies policy for dispatching rules
-  :default-result - specifies default result when no matching rules found
-  :actor-dispatcher - specifies dispatcher for actor
-  :action-dispatcher - specifies dispatcher for action
-  :subject-dispatcher - specifies dispatcher for subject"
+  :default - specifies default result when no matching rules found
+  :context - map which specifies dispatchers for :actor, :action and :subject"
   [options & body]
   `(binding [*policy* (get ~options :policy *policy*)
              *default-result* (get ~options :default-result *default-result*)
-             *actor-dispatcher* (get ~options :actor-dispather *actor-dispatcher*)
-             *action-dispatcher* (get ~options :action-dispatcher *action-dispatcher*)
-             *subject-dispatcher* (get ~options :subject-dispatcher *subject-dispatcher*)]
+             *actor-dispatcher* (get-in ~options [:context :actor] *actor-dispatcher*)
+             *action-dispatcher* (get-in ~options [:context :action] *action-dispatcher*)
+             *subject-dispatcher* (get-in ~options [:context :subject] *subject-dispatcher*)]
      ~@body))
 
-(defmacro with-dispatchers
-  "Executes body with given dispatchers. Dispatchers map may contain :actor, :action and :subject"
-  [dispatchers-map & body]
-  `(binding [*actor-dispatcher* (get ~dispatchers-map :actor *actor-dispatcher*)
-             *action-dispatcher* (get ~dispatchers-map :action *action-dispatcher*)
-             *subject-dispatcher* (get ~dispatchers-map :subject *subject-dispatcher*)]
+(defmacro with-context
+  "Executes body with given context. Context map may contain :actor, :action and :subject"
+  [context & body]
+  `(binding [*actor-dispatcher* (get ~context :actor *actor-dispatcher*)
+             *action-dispatcher* (get ~context :action *action-dispatcher*)
+             *subject-dispatcher* (get ~context :subject *subject-dispatcher*)]
      ~@body))
 
 (defmacro with-policy
@@ -38,7 +36,7 @@
   [policy & body]
   `(binding [*policy* ~policy] ~@body))
 
-(defmacro with-default-result
+(defmacro with-default
   "Executes body returning given default result if no matching rules found"
   [result & body]
   `(binding [*default-result* ~result] ~@body))
@@ -68,7 +66,8 @@
           entity-any (keyword ns str-any)]
       (when-not (known-entity? entity-any)
         (swap! relations derive entity-any any))
-      (swap! relations derive entity entity-any)))
+      (when-not (= entity entity-any)
+        (swap! relations derive entity entity-any))))
   entity)
 
 (defn register-policy!
@@ -121,39 +120,44 @@
     :else (boolean result)))
 
 (defn can?
-  "Checks if actor can do action on subject"
-  ([actor action subject]
-   (can? *policy* actor action subject))
-  ([policy actor action subject]
-   (let [kw-actor (-> actor *actor-dispatcher* build-entity register-entity!)
-         kw-action (-> action *action-dispatcher* build-entity register-entity!)
-         kw-subject (-> subject *subject-dispatcher* build-entity register-entity!)
-         kw-policy (-> policy build-entity register-policy!)
-         {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-     (-resolve result actor action subject))))
+  "Checks if actor can do action on subject with given options: context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `options` can omited, global policy and default context will be used instead"
+  ([actor action subject] (can? actor action subject nil))
+  ([actor action subject {:keys [context policy]
+                          :or {policy *policy*}}]
+   (let [actor-dispatcher (:actor context *actor-dispatcher*)
+         action-dispatcher (:action context *action-dispatcher*)
+         subject-dispatcher (:subject context *subject-dispatcher*)]
+     (let [kw-actor (-> actor actor-dispatcher build-entity register-entity!)
+           kw-action (-> action action-dispatcher build-entity register-entity!)
+           kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+           kw-policy (-> policy build-entity register-policy!)
+           {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
+       (-resolve result actor action subject)))))
 
 (def cant?
-  "Checks if actor can't do action on subject"
+  "Checks if actor can't do action on subject. For more info check `can?` documentation"
   (complement can?))
 
 (defn find-rule
-  "Looks up for rule with given action, action and subject and return coordinates where it's declared.
-  Can accept policy as first agrument, otherwise performs rule lookup against default policy"
-  ([actor action subject]
-   (find-rule *policy* actor action subject))
-  ([policy actor action subject]
-   (let [kw-actor (-> actor *actor-dispatcher* build-entity register-entity!)
-         kw-action (-> action *action-dispatcher* build-entity register-entity!)
-         kw-subject (-> subject *subject-dispatcher* build-entity register-entity!)
-         kw-policy (-> policy build-entity register-policy!)
-         {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-     source)))
+  "Looks up rule for given actor, action and subject with given context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `context` and `policy` are optional arguments and can omited, global policy and default context will be used instead"
+  ([actor action subject] (find-rule actor action subject nil))
+  ([actor action subject {:keys [context policy]
+                          :or {policy *policy*}}]
+   (let [actor-dispatcher (:actor context *actor-dispatcher*)
+         action-dispatcher (:action context *action-dispatcher*)
+         subject-dispatcher (:subject context *subject-dispatcher*)]
+     (let [kw-actor (-> actor actor-dispatcher build-entity register-entity!)
+           kw-action (-> action action-dispatcher build-entity register-entity!)
+           kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+           kw-policy (-> policy build-entity register-policy!)
+           {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
+       source))))
 
-(defn list-rules []
+(defn rules []
   ;; add policy param
-  (-> dispatch
-      methods
-      keys))
+  (->> dispatch
+       methods
+       keys))
 
 (defmacro defrule
   "Defines rule for given vector of [actor action subject] and result.

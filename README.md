@@ -45,6 +45,11 @@ Rules have a priority, in case of conflict last applied rule always wins:
 (can! :user :delete :content)
 (can? :user :delete :content) => true
 ```
+List of registered rules can be get using `rules` method:
+```clojure
+(rules)
+=> ([:zakon.core/policy :zakon.core/any :zakon.core/any :zakon.core/any] [:zakon.core/policy :zakon.core/user :zakon.core/delete :zakon.core/content])
+```
 
 `cleanup!` cleans up all defined rules and prints cleaned rules count to stdout
 
@@ -92,9 +97,9 @@ If target system should be not restrictive by default(everything which is not sp
 ```clojure
 (can! any any any)
 ```
-or locally using `with-default-result`:
+or locally using `with-default`:
 ```clojure
-(with-default-result true
+(with-default true
  (can? any any any)) => true
 ```
 
@@ -175,7 +180,7 @@ Entities hierarchy is stored in atom called `relations`:
 (inherited? :http/any any) => true
 ```
 
-### Dispatchers
+### Context
 
 Let's say we want to create rule which allows to create content with type `:acticle` for any user, and allow do anything to user with role `:admin`. User and content are respresented as records.
 ```clojure
@@ -196,13 +201,17 @@ Despite any value can be an entity, that's impractical to write rule like this:
 (can? admin :create topic) => true
 ```
 Such rules are very generic and resolver function quickly becomes cumbersome.
-**Dispatchers** allow to separate rule declaration and getting data required for rule checking from application objects. Dispatcher is a function which will be applied to object to extract entity.
+**Context** allow to separate rule declaration and getting data required for rule checking from application objects. Context is a map with functions for turning application objects into rule entities.
 So rule from example above can be rewritten using dispatchers:
 ```clojure
 (can! :user :create :article)
 (can! :admin any any)
+(def context {:actor :role :subject :type})
 
-(with-dispatchers {:actor :role :subject :type}
+(can? admin :create topic {:context context}) => true
+
+;; context can be also specified using with-context
+(with-context context
   (can? admin :create topic)) => true
 ```
 
@@ -211,13 +220,18 @@ So rule from example above can be rewritten using dispatchers:
 Rule sets can be kept isolated from each other in scope of **policy**.
 Policies can contain the same rules with different values, for example:
 ```clojure
-(cant! :policy/restrictive :user any any)
-(can! :policy/permissive :user any any)
+;; in rule definition policy is passed as first argument
+(cant! :restrictive-policy :user any any)
+(can! :permissive-policy :user any any)
 
-(can? :policy/restrictive :user :say :hello) => false
-(can? :policy/permissive :user :say :hello) => true
+;; in rule check policy is passed as options similar to context
+(can? :user :say :hello {:policy :restrictive-policy}) => false
+(can? :user :say :hello {:policy :permissive-policy}) => true
+
+;; policy can be also specified using with-policy
+(with-policy :restrictive-policy
+  (can? :user :say :hello)) => false
 ```
-To specify policy for rule definition or rule checking, it should be passed as first agrument.
 All policies are inherited from :zakon.core/policy. If specified policy can't dispatch rule, :zakon.core/policy will be used.
 
 ## License
