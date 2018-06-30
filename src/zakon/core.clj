@@ -219,7 +219,7 @@
 (defn cleanup!
   "Cleanup all rules and relations. Reset everything to initial state."
   []
-  (let [rules (-> (list-rules) count)]
+  (let [rules (-> (rules) count)]
     (reset! relations (make-hierarchy))
     (def dispatch nil)
     (defmulti dispatch
