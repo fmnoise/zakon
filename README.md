@@ -45,7 +45,7 @@ Rules have a priority, in case of conflict last applied rule always wins:
 (can! :user :delete :content)
 (can? :user :delete :content) => true
 ```
-List of registered rules can be get using `rules` method:
+List of registered rules can be obtained using `rules` method:
 ```clojure
 (rules)
 => ([:zakon.core/policy :zakon.core/any :zakon.core/any :zakon.core/any] [:zakon.core/policy :zakon.core/user :zakon.core/delete :zakon.core/content])
@@ -201,8 +201,8 @@ Despite any value can be an entity, that's impractical to write rule like this:
 (can? admin :create topic) => true
 ```
 Such rules are very generic and resolver function quickly becomes cumbersome.
-**Context** allow to separate rule declaration and getting data required for rule checking from application objects. Context is a map with functions for turning application objects into rule entities.
-So rule from example above can be rewritten using dispatchers:
+**Context** allows to separate rule declaration and getting data required for rule checking from application objects. Context is a map with functions for turning application objects into rule entities.
+So rule from example above can be rewritten using context:
 ```clojure
 (can! :user :create :article)
 (can! :admin any any)
@@ -232,7 +232,7 @@ Policies can contain the same rules with different values, for example:
 (with-policy :restrictive-policy
   (can? :user :say :hello)) => false
 ```
-All policies are inherited from :zakon.core/policy. If specified policy can't dispatch rule, :zakon.core/policy will be used.
+All policies are inherited from `:zakon.core/policy` which acts as **global policy**. If specified policy can't dispatch rule, `:zakon.core/policy` will be used.
 
 ## License
 
