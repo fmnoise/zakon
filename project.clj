@@ -1,5 +1,5 @@
 (defproject zakon "0.0.1"
-  :description "Authorization rules engine"
+  :description "Authorization library"
   :url "http://github.com/dawcs/police"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}

@@ -3,11 +3,7 @@
 > But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
 > (James 1:25)
 
-zakon (/zakon/ rus. *закон - law*) is declarative authorization library inspired by https://github.com/ryanb/cancan
-
-It has no dependencies (despite clojure itself) and uses clojure multimethods and hierarchies under the hood.
-
-Everything is highly experimental. You're warned.
+zakon (/zakon/ rus. *закон - law*) is authorization library inspired by https://github.com/ryanb/cancan
 
 ## Usage
 
