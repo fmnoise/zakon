@@ -5,9 +5,28 @@
 
 zakon (/zakon/ rus. *закон - law*) is authorization library inspired by https://github.com/ryanb/cancan
 
-## Usage
+## Install
 
-**Not released to clojars yet**
+Lein/Boot:
+```clojure
+[dawcs/zakon "0.1.0"]
+```
+
+deps.edn:
+```clojure
+dawcs/zakon {:mvn/version "0.1.0"}
+```
+
+Maven:
+```xml
+<dependency>
+  <groupId>dawcs</groupId>
+  <artifactId>zakon</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+## Usage
 
 ```clojure
 (use '[zakon.core])
