@@ -9,18 +9,18 @@ zakon (/zakon/ rus. *закон - law*) is authorization library inspired by htt
 
 Lein/Boot:
 ```clojure
-[dawcs/zakon "0.1.0"]
+[zakon "0.1.0"]
 ```
 
 deps.edn:
 ```clojure
-dawcs/zakon {:mvn/version "0.1.0"}
+zakon {:mvn/version "0.1.0"}
 ```
 
 Maven:
 ```xml
 <dependency>
-  <groupId>dawcs</groupId>
+  <groupId>zakon</groupId>
   <artifactId>zakon</artifactId>
   <version>0.1.0</version>
 </dependency>
