@@ -3,7 +3,7 @@
 > But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
 > (James 1:25)
 
-zakon (/zakon/ rus. *закон - law*) is authorization library inspired by https://github.com/ryanb/cancan
+zakon (/zakon/ rus. *закон - law*) is authorization library inspired by https://github.com/ryanb/cancan and built on top of Clojure multimethods
 
 ## Install
 
