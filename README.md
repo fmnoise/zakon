@@ -3,7 +3,7 @@
 > But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
 > (James 1:25)
 
-zakon (/zakon/ rus. *закон - law*) is authorization library inspired by https://github.com/ryanb/cancan and built on top of Clojure multimethods
+zakon (/zakon/ rus. *закон - law*) is declarative authorization library inspired by https://github.com/ryanb/cancan and built on top of Clojure multimethods
 
 ## Install
 
@@ -66,7 +66,7 @@ List of registered rules can be obtained using `rules` method:
 => ([:zakon.core/policy :zakon.core/any :zakon.core/any :zakon.core/any] [:zakon.core/policy :zakon.core/user :zakon.core/delete :zakon.core/content])
 ```
 
-`cleanup!` cleans up all defined rules and prints cleaned rules count to stdout
+`cleanup!` cleans up all defined rules and prints cleaned rules count to stdout.
 
 ### Wildcards
 
@@ -93,7 +93,7 @@ Can user delete content? From zakon's point of view it can't, as statement about
 (cant! :user :delete any)
 (can? :user :delete :content) => false
 ```
-The same logic works if we swap last sentence parts - "user cannot delete anything, but can do anything with content".
+The same logic works if we swap sentence parts - "user cannot delete anything, but can do anything with content".
 ```clojure
 (cant! :user :delete any)
 (can! :user any :content)
@@ -197,7 +197,7 @@ Entities hierarchy is stored in atom called `relations`:
 
 ### Context
 
-Let's say we want to create rule which allows to create content with type `:acticle` for any user, and allow do anything to user with role `:admin`. User and content are respresented as records.
+Let's say we want to define a rule which allows to create content with type `:acticle` for any user, and allows doing anything to user with role `:admin`. User and content are respresented as records.
 ```clojure
 (defrecord User [role])
 (defrecord Content [type])
@@ -205,7 +205,7 @@ Let's say we want to create rule which allows to create content with type `:acti
 (def admin (->User :admin))
 (def topic (->Content :topic))
 ```
-Despite any value can be an entity, that's impractical to write rule like this:
+Despite any value can be an entity, that's impractical to define rule like this:
 ```clojure
 (defrule [any any any]
   (fn [{:keys [actor action subject]}]
@@ -235,7 +235,7 @@ So rule from example above can be rewritten using context:
 Rule sets can be kept isolated from each other in scope of **policy**.
 Policies can contain the same rules with different values, for example:
 ```clojure
-;; policy is passed as first argument when definind rule
+;; policy is passed as first argument when defining rule
 (cant! :restrictive-policy :user any any)
 (can! :permissive-policy :user any any)
 
