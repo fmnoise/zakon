@@ -8,7 +8,8 @@
   "Global policy"
   ::policy)
 
-(def relations (atom (make-hierarchy)))
+(def ^:no-doc relations
+  (atom (make-hierarchy)))
 
 (def ^:dynamic *default-result* false)
 (def ^:dynamic *policy* global-policy)
@@ -51,8 +52,7 @@
   [result & body]
   `(binding [*default-result* ~result] ~@body))
 
-(defmulti dispatch
-  "Base method for rules dispatching. Should not be used directly until you know what you're doing"
+(defmulti ^:no-doc dispatch
   (fn [policy actor action subject] [policy actor action subject])
   :hierarchy relations)
 
@@ -67,8 +67,7 @@
 (defn- known-policy? [policy]
   (isa? @relations policy global-policy))
 
-(defn register-entity!
-  "Service method used to build entity relations. Should not be used directly"
+(defn ^:no-doc register-entity!
   [entity]
   (when-not (known-entity? entity)
     (let [ns (namespace entity)
@@ -80,8 +79,7 @@
         (swap! relations derive entity entity-any))))
   entity)
 
-(defn register-policy!
-  "Service method used to build policy relations. Should not be used directly"
+(defn ^:no-doc register-policy!
   [policy]
   (when-not (known-policy? policy)
     (swap! relations derive policy global-policy))
@@ -92,8 +90,7 @@
     (name v)
     (-> v str (clojure.string/replace #"\s" "-"))))
 
-(defn build-entity
-  "Service method used to build entity from given value. Should not be used directly"
+(defn ^:no-doc build-entity
   ([value]
    (let [[kw ns]
          (if (keyword? value)
@@ -164,6 +161,7 @@
        source))))
 
 (defn rules []
+  "Returns list of all registered rules"
   ;; add policy param
   (->> dispatch
        methods
