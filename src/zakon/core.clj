@@ -15,6 +15,7 @@
   :policy - specifies policy for dispatching rules
   :default - specifies default result when no matching rules found
   :context - map which specifies dispatchers for :actor, :action and :subject"
+  {:style/indent 1}
   [options & body]
   `(binding [*policy* (get ~options :policy *policy*)
              *default-result* (get ~options :default-result *default-result*)
@@ -25,6 +26,7 @@
 
 (defmacro with-context
   "Executes body with given context. Context map may contain :actor, :action and :subject"
+  {:style/indent 1}
   [context & body]
   `(binding [*actor-dispatcher* (get ~context :actor *actor-dispatcher*)
              *action-dispatcher* (get ~context :action *action-dispatcher*)
@@ -33,11 +35,13 @@
 
 (defmacro with-policy
   "Executes body against given policy"
+  {:style/indent 1}
   [policy & body]
   `(binding [*policy* ~policy] ~@body))
 
 (defmacro with-default
   "Executes body returning given default result if no matching rules found"
+  {:style/indent 1}
   [result & body]
   `(binding [*default-result* ~result] ~@body))
 
