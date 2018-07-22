@@ -1,7 +1,13 @@
 (ns zakon.core)
 
-(def any ::any)
-(def global-policy ::policy)
+(def any
+  "Wildcard for anything"
+  ::any)
+
+(def global-policy
+  "Global policy"
+  ::policy)
+
 (def relations (atom (make-hierarchy)))
 
 (def ^:dynamic *default-result* false)
