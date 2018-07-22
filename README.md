@@ -249,6 +249,10 @@ Policies can contain the same rules with different values, for example:
 ```
 All policies are inherited from `:zakon.core/policy` which acts as **global policy**. If specified policy can't dispatch rule, `:zakon.core/policy` will be used.
 
+## API docs
+
+https://dawcs.github.io/zakon/
+
 ## License
 
 Copyright © 2018 DAWCS
