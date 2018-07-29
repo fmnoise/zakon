@@ -7,7 +7,7 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 
 ## Usage
 
-[![Current Version](https://clojars.org/dawcs/zakon/latest-version.svg)](https://clojars.org/dawcs/zakon)
+[![Current Version](https://clojars.org/zakon/latest-version.svg)](https://clojars.org/zakon)
 
 ```clojure
 (require '[zakon.core :refer :all])
