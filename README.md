@@ -7,6 +7,7 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 
 ## Usage
 
+[![cljdoc badge](https://cljdoc.xyz/badge/zakon/zakon)](https://cljdoc.xyz/d/zakon/zakon/CURRENT)
 [![Current Version](https://clojars.org/zakon/latest-version.svg)](https://clojars.org/zakon)
 
 ```clojure
@@ -229,10 +230,6 @@ Policies can contain the same rules with different values, for example:
   (can? :user :say :hello)) => false
 ```
 All policies are inherited from `:zakon.core/policy` which acts as **global policy**. If specified policy can't dispatch rule, `:zakon.core/policy` will be used.
-
-## API docs
-
-https://dawcs.github.io/zakon/
 
 ## License
 
