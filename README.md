@@ -1,4 +1,4 @@
-# zakon [![CircleCI](https://circleci.com/gh/dawcs/zakon/tree/master.svg?style=svg)](https://circleci.com/gh/dawcs/zakon/tree/master)
+# zakon [![CircleCI](https://circleci.com/gh/dawcs/zakon/tree/master.svg?style=svg)](https://circleci.com/gh/dawcs/zakon/tree/master) [![cljdoc badge](https://cljdoc.xyz/badge/zakon/zakon)](https://cljdoc.xyz/d/zakon/zakon/CURRENT)
 
 > But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
 > (James 1:25)
@@ -7,7 +7,6 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 
 ## Usage
 
-[![cljdoc badge](https://cljdoc.xyz/badge/zakon/zakon)](https://cljdoc.xyz/d/zakon/zakon/CURRENT)
 [![Current Version](https://clojars.org/zakon/latest-version.svg)](https://clojars.org/zakon)
 
 ```clojure
