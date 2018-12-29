@@ -232,6 +232,6 @@ All policies are inherited from `:zakon.core/policy` which acts as **global poli
 
 ## License
 
-Copyright © 2018 DAWCS
+Copyright © 2018 fmnoise
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
