@@ -83,12 +83,12 @@ The same logic works if we swap sentence parts - "user cannot delete anything, b
 
 ### Default rule
 
-The in example above, restricting part is redundant, because of zakon is restrictive by default (everything which is not specified as allowed, is restricted).
+In the example above, restricting part is redundant, because of zakon is restrictive by default (everything which is not specified as allowed, is restricted).
 So initially there's only **default rule** defined using wildcards and equivalent to:
 ```clojure
 (cant! any any any)
 ```
-If we dispatch rule that was not yet defined, this default one will be used instead.
+If we dispatch rule that was not yet defined, the default one will be used instead.
 If target system should be not restrictive by default(everything which is not specified as restricted, is allowed), that can be either redefined globally:
 ```clojure
 (can! any any any)
