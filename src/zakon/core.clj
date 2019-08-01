@@ -118,12 +118,15 @@
     (isa? @relations kw-child kw-parent)))
 
 (defn- -resolve [result actor action subject]
-  ;; find workaround to dispatch multimethods
   (cond
-    (fn? result) (-> {:actor actor :action action :subject subject}
-                     result
-                     (-resolve actor action subject))
-    (instance? clojure.lang.Atom result) (-resolve @result actor action subject)
+    (or (fn? result) (instance? clojure.lang.MultiFn result))
+    (-> {:actor actor :action action :subject subject}
+        result
+        (recur actor action subject))
+
+    (instance? clojure.lang.Atom result)
+    (recur @result actor action subject)
+
     :else (boolean result)))
 
 (defn can?

@@ -120,7 +120,7 @@ In the following example atom is used to store result:
 (swap! content-deletion-allowed not)
 (can? :user :delete :content) => false
 ```
-Function which is used as resolver should accept single argument - map with keys `:actor`, `:action` and `:subject`:
+Function or multimethod which is used as resolver should accept single argument - map with keys `:actor`, `:action` and `:subject`:
 ```clojure
 (def user-types #{:content :comment})
 (defrule [:user :create any] (fn [{:keys [subject]}] (user-types subject)))
@@ -128,8 +128,6 @@ Function which is used as resolver should accept single argument - map with keys
 (can? :user :create :comment) => true
 (can? :user :create :share) => false
 ```
-
-**Important! Only functions which return `true` for `fn?` can be used as resolvers at the moment(so no multimethods) but things may be changed in future**
 
 In order to keep things predictable `can?` and `cant?` always return boolean result, so there's no need to do conversion manually in `defrule` or resolver:
 ```clojure

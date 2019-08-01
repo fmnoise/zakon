@@ -71,6 +71,17 @@
   (is (can? :user :create :content))
   (is (cant? :user :delete :content)))
 
+(deftest defrule--with-multimethod-test
+  (defmulti mresult (fn [{:keys [actor]}] (:role actor)))
+  (defmethod mresult :default [_] false)
+  (defmethod mresult :user [{:keys [action]}] (= action :view))
+  (defmethod mresult :admin [_] true)
+  (defrule [any any :content] mresult)
+  (is (can? {:role :user} :view :content))
+  (is (cant? {:role :guest} :view :content))
+  (is (cant? {:role :user} :create :content))
+  (is (can? {:role :admin} :delete :content)))
+
 (deftest defrule--with-atom-test
   (def result-atom (atom true))
   (defrule [:user :create :content] result-atom)
@@ -140,11 +151,11 @@
         context {:actor :role :subject :type}]
     (z/with-context context
       (is (can? user :create content))
-      (is (= {:line 137, :column 3, :ns "zakon.core-test"}
+      (is (= {:line 148, :column 3, :ns "zakon.core-test"}
              (find-rule user :create content)))
       (is (cant? user :delete content)))
     (is (can? user :create content {:context context}))
-    (is (= {:line 137, :column 3, :ns "zakon.core-test"}
+    (is (= {:line 148, :column 3, :ns "zakon.core-test"}
            (find-rule user :create content {:context context})))
     (is (cant? user :delete content {:context context}))
     (is (= ::z/default-rule (find-rule user :delete content {:context context})))))
