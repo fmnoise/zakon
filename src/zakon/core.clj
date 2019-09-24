@@ -136,13 +136,13 @@
                           :or {policy *policy*}}]
    (let [actor-dispatcher (:actor context *actor-dispatcher*)
          action-dispatcher (:action context *action-dispatcher*)
-         subject-dispatcher (:subject context *subject-dispatcher*)]
-     (let [kw-actor (-> actor actor-dispatcher build-entity register-entity!)
-           kw-action (-> action action-dispatcher build-entity register-entity!)
-           kw-subject (-> subject subject-dispatcher build-entity register-entity!)
-           kw-policy (-> policy build-entity register-policy!)
-           {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-       (-resolve result actor action subject)))))
+         subject-dispatcher (:subject context *subject-dispatcher*)
+         kw-actor (-> actor actor-dispatcher build-entity register-entity!)
+         kw-action (-> action action-dispatcher build-entity register-entity!)
+         kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+         kw-policy (-> policy build-entity register-policy!)
+         {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
+     (-resolve result actor action subject))))
 
 (def cant?
   "Checks if actor can't do action on subject. For more info check `can?` documentation"
@@ -155,16 +155,17 @@
                           :or {policy *policy*}}]
    (let [actor-dispatcher (:actor context *actor-dispatcher*)
          action-dispatcher (:action context *action-dispatcher*)
-         subject-dispatcher (:subject context *subject-dispatcher*)]
-     (let [kw-actor (-> actor actor-dispatcher build-entity register-entity!)
-           kw-action (-> action action-dispatcher build-entity register-entity!)
-           kw-subject (-> subject subject-dispatcher build-entity register-entity!)
-           kw-policy (-> policy build-entity register-policy!)
-           {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
-       source))))
+         subject-dispatcher (:subject context *subject-dispatcher*)
+         kw-actor (-> actor actor-dispatcher build-entity register-entity!)
+         kw-action (-> action action-dispatcher build-entity register-entity!)
+         kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+         kw-policy (-> policy build-entity register-policy!)
+         {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
+     source)))
 
-(defn rules []
+(defn rules
   "Returns list of all registered rules"
+  []
   ;; add policy param
   (->> dispatch
        methods
