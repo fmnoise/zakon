@@ -15,19 +15,19 @@
 (def ^:dynamic *policy* global-policy)
 
 (defprotocol Entity
-  (->actor [_])
-  (->action [_])
-  (->subject [_]))
+  (as-actor [_])
+  (as-action [_])
+  (as-subject [_]))
 
 (extend-protocol Entity
   java.lang.Object
-  (->actor [this] this)
-  (->action [this] this)
-  (->subject [this] this)
+  (as-actor [this] this)
+  (as-action [this] this)
+  (as-subject [this] this)
   nil
-  (->actor [this] this)
-  (->action [this] this)
-  (->subject [this] this))
+  (as-actor [this] this)
+  (as-action [this] this)
+  (as-subject [this] this))
 
 (defmulti ^:no-doc dispatch
   (fn [policy actor action subject] [policy actor action subject])
@@ -110,9 +110,9 @@
   "Checks if actor can do action on subject with given options: context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `options` can omited, global policy and default context will be used instead"
   ([actor action subject] (can? actor action subject nil))
   ([actor action subject {:keys [policy] :or {policy *policy*}}]
-   (let [kw-actor (-> actor ->actor build-entity register-entity!)
-         kw-action (-> action ->action build-entity register-entity!)
-         kw-subject (-> subject ->subject build-entity register-entity!)
+   (let [kw-actor (-> actor as-actor build-entity register-entity!)
+         kw-action (-> action as-action build-entity register-entity!)
+         kw-subject (-> subject as-subject build-entity register-entity!)
          kw-policy (-> policy build-entity register-policy!)
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      (-resolve result actor action subject))))
@@ -125,9 +125,9 @@
   "Looks up rule for given actor, action and subject with given context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `context` and `policy` are optional arguments and can omited, global policy and default context will be used instead"
   ([actor action subject] (find-rule actor action subject nil))
   ([actor action subject {:keys [policy] :or {policy *policy*}}]
-   (let [kw-actor (-> actor ->actor build-entity register-entity!)
-         kw-action (-> action ->action build-entity register-entity!)
-         kw-subject (-> subject ->subject build-entity register-entity!)
+   (let [kw-actor (-> actor as-actor build-entity register-entity!)
+         kw-action (-> action as-action build-entity register-entity!)
+         kw-subject (-> subject as-subject build-entity register-entity!)
          kw-policy (-> policy build-entity register-policy!)
          {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      source)))

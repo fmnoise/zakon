@@ -149,8 +149,8 @@
 
   (extend-protocol z/Entity
     clojure.lang.PersistentArrayMap
-    (z/->actor [{:keys [role]}] role)
-    (z/->subject [{:keys [type]}] type))
+    (z/as-actor [{:keys [role]}] role)
+    (z/as-subject [{:keys [type]}] type))
 
   (let [user {:role :user}
         content {:type :topic}]
