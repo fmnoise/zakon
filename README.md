@@ -10,7 +10,7 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 [![Current Version](https://clojars.org/zakon/latest-version.svg)](https://clojars.org/zakon)
 
 ```clojure
-(require '[zakon.core :refer :all])
+(require '[zakon.core :as z :refer :all])
 ```
 
 ### Rules
@@ -89,14 +89,9 @@ So initially there's only **default rule** defined using wildcards and equivalen
 (cant! any any any)
 ```
 If we dispatch rule that was not yet defined, the default one will be used instead.
-If target system should be not restrictive by default(everything which is not specified as restricted, is allowed), that can be either redefined globally:
+If target system should be not restrictive by default(everything which is not specified as restricted, is allowed), that can be redefined:
 ```clojure
 (can! any any any)
-```
-or locally using `with-default`:
-```clojure
-(with-default true
- (can? any any any)) => true
 ```
 
 ### Debugging rules
@@ -174,15 +169,12 @@ Entities hierarchy is stored in atom called `relations`:
 (inherited? :http/any any) => true
 ```
 
-### Context
+### Turning objects into entities
 
 Let's say we want to define a rule which allows to create content with type `:acticle` for any user, and allows doing anything to user with role `:admin`. User and content are respresented as records.
 ```clojure
 (defrecord User [role])
 (defrecord Content [type])
-
-(def admin (->User :admin))
-(def topic (->Content :topic))
 ```
 Despite any value can be an entity, that's impractical to define rule like this:
 ```clojure
@@ -195,18 +187,19 @@ Despite any value can be an entity, that's impractical to define rule like this:
 (can? admin :create topic) => true
 ```
 Such rules are very generic and resolver function quickly becomes cumbersome.
-**Context** allows to separate rule declaration and getting data required for rule checking from application objects. Context is a map with functions for turning application objects into rule entities.
+We can separate rule declaration and getting data required for rule checking from domain objects using `Entity` protocol:
 So rule from example above can be rewritten using context:
 ```clojure
+(extend-protocol z/Entity
+  User
+  (z/->actor [{:keys [role]}] role)
+
+  Content
+  (z/->subject [{:keys [type]}] type))
+
 (can! :user :create :article)
 (can! :admin any any)
-(def context {:actor :role :subject :type})
-
-(can? admin :create topic {:context context}) => true
-
-;; context can be also specified using with-context
-(with-context context
-  (can? admin :create topic)) => true
+(can? (->User :admin) :create (->Content :topic)}) => true
 ```
 
 ### Policies
@@ -221,15 +214,12 @@ Policies can contain the same rules with different values, for example:
 ;; when checking rule, policy is passed as options similarly to context
 (can? :user :say :hello {:policy :restrictive-policy}) => false
 (can? :user :say :hello {:policy :permissive-policy}) => true
-
-;; policy can be also specified using with-policy
-(with-policy :restrictive-policy
-  (can? :user :say :hello)) => false
 ```
+
 All policies are inherited from `:zakon.core/policy` which acts as **global policy**. If specified policy can't dispatch rule, `:zakon.core/policy` will be used.
 
 ## License
 
-Copyright © 2018 fmnoise
+Copyright © 2020 fmnoise
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.
