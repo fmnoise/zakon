@@ -29,17 +29,6 @@
   (->action [this] this)
   (->subject [this] this))
 
-(defmacro with
-  "Executes body with the given options. Options is a map with following keys
-  :policy - specifies policy for dispatching rules
-  :default - specifies default result when no matching rules found
-  :context - map which specifies dispatchers for :actor, :action and :subject"
-  {:style/indent 1}
-  [options & body]
-  `(binding [*policy* (get ~options :policy *policy*)
-             *default-result* (get ~options :default-result *default-result*)]
-     ~@body))
-
 (defmulti ^:no-doc dispatch
   (fn [policy actor action subject] [policy actor action subject])
   :hierarchy relations)
