@@ -1,4 +1,4 @@
-(defproject zakon "0.1.2"
+(defproject zakon "0.2.0"
   :description "Authorization library"
   :url "http://github.com/dawcs/zakon"
   :license {:name "Eclipse Public License"
