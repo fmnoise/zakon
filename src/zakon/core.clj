@@ -13,9 +13,21 @@
 
 (def ^:dynamic *default-result* false)
 (def ^:dynamic *policy* global-policy)
-(def ^:dynamic *actor-dispatcher* identity)
-(def ^:dynamic *action-dispatcher* identity)
-(def ^:dynamic *subject-dispatcher* identity)
+
+(defprotocol Entity
+  (->actor [_])
+  (->action [_])
+  (->subject [_]))
+
+(extend-protocol Entity
+  java.lang.Object
+  (->actor [this] this)
+  (->action [this] this)
+  (->subject [this] this)
+  nil
+  (->actor [this] this)
+  (->action [this] this)
+  (->subject [this] this))
 
 (defmacro with
   "Executes body with the given options. Options is a map with following keys
@@ -25,32 +37,8 @@
   {:style/indent 1}
   [options & body]
   `(binding [*policy* (get ~options :policy *policy*)
-             *default-result* (get ~options :default-result *default-result*)
-             *actor-dispatcher* (get-in ~options [:context :actor] *actor-dispatcher*)
-             *action-dispatcher* (get-in ~options [:context :action] *action-dispatcher*)
-             *subject-dispatcher* (get-in ~options [:context :subject] *subject-dispatcher*)]
+             *default-result* (get ~options :default-result *default-result*)]
      ~@body))
-
-(defmacro with-context
-  "Executes body with given context. Context map may contain :actor, :action and :subject"
-  {:style/indent 1}
-  [context & body]
-  `(binding [*actor-dispatcher* (get ~context :actor *actor-dispatcher*)
-             *action-dispatcher* (get ~context :action *action-dispatcher*)
-             *subject-dispatcher* (get ~context :subject *subject-dispatcher*)]
-     ~@body))
-
-(defmacro with-policy
-  "Executes body against given policy"
-  {:style/indent 1}
-  [policy & body]
-  `(binding [*policy* ~policy] ~@body))
-
-(defmacro with-default
-  "Executes body returning given default result if no matching rules found"
-  {:style/indent 1}
-  [result & body]
-  `(binding [*default-result* ~result] ~@body))
 
 (defmulti ^:no-doc dispatch
   (fn [policy actor action subject] [policy actor action subject])
@@ -132,14 +120,10 @@
 (defn can?
   "Checks if actor can do action on subject with given options: context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `options` can omited, global policy and default context will be used instead"
   ([actor action subject] (can? actor action subject nil))
-  ([actor action subject {:keys [context policy]
-                          :or {policy *policy*}}]
-   (let [actor-dispatcher (:actor context *actor-dispatcher*)
-         action-dispatcher (:action context *action-dispatcher*)
-         subject-dispatcher (:subject context *subject-dispatcher*)
-         kw-actor (-> actor actor-dispatcher build-entity register-entity!)
-         kw-action (-> action action-dispatcher build-entity register-entity!)
-         kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+  ([actor action subject {:keys [policy] :or {policy *policy*}}]
+   (let [kw-actor (-> actor ->actor build-entity register-entity!)
+         kw-action (-> action ->action build-entity register-entity!)
+         kw-subject (-> subject ->subject build-entity register-entity!)
          kw-policy (-> policy build-entity register-policy!)
          {:keys [result]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      (-resolve result actor action subject))))
@@ -151,14 +135,10 @@
 (defn find-rule
   "Looks up rule for given actor, action and subject with given context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `context` and `policy` are optional arguments and can omited, global policy and default context will be used instead"
   ([actor action subject] (find-rule actor action subject nil))
-  ([actor action subject {:keys [context policy]
-                          :or {policy *policy*}}]
-   (let [actor-dispatcher (:actor context *actor-dispatcher*)
-         action-dispatcher (:action context *action-dispatcher*)
-         subject-dispatcher (:subject context *subject-dispatcher*)
-         kw-actor (-> actor actor-dispatcher build-entity register-entity!)
-         kw-action (-> action action-dispatcher build-entity register-entity!)
-         kw-subject (-> subject subject-dispatcher build-entity register-entity!)
+  ([actor action subject {:keys [policy] :or {policy *policy*}}]
+   (let [kw-actor (-> actor ->actor build-entity register-entity!)
+         kw-action (-> action ->action build-entity register-entity!)
+         kw-subject (-> subject ->subject build-entity register-entity!)
          kw-policy (-> policy build-entity register-policy!)
          {:keys [source]} (dispatch kw-policy kw-actor kw-action kw-subject)]
      source)))

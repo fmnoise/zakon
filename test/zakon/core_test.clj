@@ -144,18 +144,17 @@
       "policy restrictions override default policy rules")
   (is (can? :user :delete :profile)))
 
-(deftest context-test
+(deftest entity-test
   (can! :user :create :topic)
+
+  (extend-protocol z/Entity
+    clojure.lang.PersistentArrayMap
+    (z/->actor [{:keys [role]}] role)
+    (z/->subject [{:keys [type]}] type))
+
   (let [user {:role :user}
-        content {:type :topic}
-        context {:actor :role :subject :type}]
-    (z/with-context context
-      (is (can? user :create content))
-      (is (= {:line 148, :column 3, :ns "zakon.core-test"}
-             (find-rule user :create content)))
-      (is (cant? user :delete content)))
-    (is (can? user :create content {:context context}))
+        content {:type :topic}]
+    (is (can? user :create content))
     (is (= {:line 148, :column 3, :ns "zakon.core-test"}
-           (find-rule user :create content {:context context})))
-    (is (cant? user :delete content {:context context}))
-    (is (= ::z/default-rule (find-rule user :delete content {:context context})))))
+           (find-rule user :create content)))
+    (is (cant? user :delete content))))
