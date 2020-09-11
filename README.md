@@ -187,8 +187,7 @@ Despite any value can be an entity, that's impractical to define rule like this:
 (can? admin :create topic) => true
 ```
 Such rules are very generic and resolver function quickly becomes cumbersome.
-We can separate rule declaration and getting data required for rule checking from domain objects using `Entity` protocol:
-So rule from example above can be rewritten using context:
+We can separate rule declaration and getting data required for rule checking from domain objects using `Entity` protocol, so rule from example above can be rewritten:
 ```clojure
 (extend-protocol z/Entity
   User
@@ -197,9 +196,12 @@ So rule from example above can be rewritten using context:
   Content
   (z/->subject [{:keys [type]}] type))
 
-(can! :user :create :article)
+(can! any :create :article)
 (can! :admin any any)
 (can? (->User :admin) :create (->Content :topic)}) => true
+(can? (->User :editor) :create (->Content :article)}) => true
+(can? (->User :editor) :delete (->Content :article)}) => false
+(can? (->User :editor) :create (->Content :topic)}) => false
 ```
 
 ### Policies
