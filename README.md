@@ -191,10 +191,10 @@ We can separate rule declaration and getting data required for rule checking fro
 ```clojure
 (extend-protocol z/Entity
   User
-  (z/->actor [{:keys [role]}] role)
+  (z/as-actor [{:keys [role]}] role)
 
   Content
-  (z/->subject [{:keys [type]}] type))
+  (z/as-subject [{:keys [type]}] type))
 
 (can! any :create :article)
 (can! :admin any any)
