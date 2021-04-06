@@ -12,7 +12,6 @@
   (atom (make-hierarchy)))
 
 (def ^:dynamic *default-result* false)
-(def ^:dynamic *policy* global-policy)
 
 (defprotocol Entity
   (as-actor [_])
@@ -109,7 +108,7 @@
 (defn can?
   "Checks if actor can do action on subject with given options: context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `options` can omited, global policy and default context will be used instead"
   ([actor action subject] (can? actor action subject nil))
-  ([actor action subject {:keys [policy] :or {policy *policy*}}]
+  ([actor action subject {:keys [policy] :or {policy global-policy}}]
    (let [kw-actor (-> actor as-actor build-entity register-entity!)
          kw-action (-> action as-action build-entity register-entity!)
          kw-subject (-> subject as-subject build-entity register-entity!)
@@ -124,7 +123,7 @@
 (defn find-rule
   "Looks up rule for given actor, action and subject with given context and policy, where context is a map of 3 keys :actor, :action and :subject, each one containing function for getting rule entity from application object. `context` and `policy` are optional arguments and can omited, global policy and default context will be used instead"
   ([actor action subject] (find-rule actor action subject nil))
-  ([actor action subject {:keys [policy] :or {policy *policy*}}]
+  ([actor action subject {:keys [policy] :or {policy global-policy}}]
    (let [kw-actor (-> actor as-actor build-entity register-entity!)
          kw-action (-> action as-action build-entity register-entity!)
          kw-subject (-> subject as-subject build-entity register-entity!)
@@ -153,7 +152,7 @@
   ([rule res]
    (let [m (meta &form)]
      `~(with-meta
-         `(defrule *policy* ~rule ~res)
+         `(defrule global-policy ~rule ~res)
          m)))
   ([policy [actor action subject] res]
    (let [m (meta &form)
@@ -181,7 +180,7 @@
   ([actor action subject]
    (let [m (meta &form)]
      `~(with-meta
-         `(can! *policy* ~actor ~action ~subject)
+         `(can! global-policy ~actor ~action ~subject)
          m)))
   ([policy actor action subject]
    (let [m (meta &form)]
@@ -194,7 +193,7 @@
   ([actor action subject]
    (let [m (meta &form)]
      `~(with-meta
-         `(cant! *policy* ~actor ~action ~subject)
+         `(cant! global-policy ~actor ~action ~subject)
          m)))
   ([policy actor action subject]
    (let [m (meta &form)]
