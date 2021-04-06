@@ -139,11 +139,6 @@
        methods
        keys))
 
-(defn relations
-  "Lists all relations"
-  []
-  @relations-store)
-
 (defmacro defrule
   "Defines rule for given vector of [actor action subject] and result.
   Can accept policy as first param, otherwise uses default policy.

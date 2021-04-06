@@ -158,11 +158,6 @@ As shown above `any` can be used as wildcard for defining rules, so it's root ob
 (can? :role/user  :http/get :routes/admin) => false
 ```
 
-Entities hierarchy can be retrieved with `relations` function, but it's pretty much an implementation detail and it's not recommended to rely on it:
-```clojure
-(zkn/relations)
-=> {:parents {:role/any #{:zakon.core/any}, :role/user #{:role/any}, :role/admin #{:role/user}, :http/any #{:zakon.core/any}, :http/get #{:http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any}, :routes/admin #{:routes/any}}, :ancestors {:role/any #{:zakon.core/any}, :role/user #{:zakon.core/any :role/any}, :role/admin #{:zakon.core/any :role/user :role/any}, :http/any #{:zakon.core/any}, :http/get #{:zakon.core/any :http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any :zakon.core/any}, :routes/admin #{:routes/any :zakon.core/any}}, :descendants {:zakon.core/any #{:routes/any :http/any :routes/home :role/user :role/admin :role/any :http/get :routes/admin}, :role/any #{:role/user :role/admin}, :role/user #{:role/admin}, :http/any #{:http/get}, :routes/any #{:routes/home :routes/admin}}}
-```
 `inherited?` can be used to check if 2 enities are in child-parent relations:
 ```clojure
 (zkn/inherited? :role/admin :role/user) => true
