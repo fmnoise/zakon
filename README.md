@@ -10,7 +10,7 @@ zakon (/zakon/ rus. *закон - law*) is declarative authorization library ins
 [![Current Version](https://clojars.org/zakon/latest-version.svg)](https://clojars.org/zakon)
 
 ```clojure
-(require '[zakon.core :as z :refer :all])
+(require '[zakon.core :as zkn :refer [can! cant! can? cant? any defrule])
 ```
 
 ### Rules
@@ -43,7 +43,7 @@ Rules have a priority, in case of conflict last applied rule always wins:
 ```
 List of registered rules can be obtained using `rules` method:
 ```clojure
-(rules)
+(zkn/rules)
 => ([:zakon.core/policy :zakon.core/any :zakon.core/any :zakon.core/any] [:zakon.core/policy :zakon.core/user :zakon.core/delete :zakon.core/content])
 ```
 
@@ -99,8 +99,8 @@ If target system should be not restrictive by default(everything which is not sp
 With all that wildcards and defaults ambiguity, it can be hard to understand which rule was dispatched for given arguments.
 `find-rule` can be used to debug rule:
 ```clojure
-(find-rule :user :delete :content) => {:line 4, :column 1, :ns "user"}
-(find-rule any :delete :content) => :zakon.core/default-rule
+(zkn/find-rule :user :delete :content) => {:line 4, :column 1, :ns "user"}
+(zkn/find-rule any :delete :content) => :zakon.core/default-rule
 ```
 
 ### Resolvers
@@ -157,16 +157,17 @@ As shown above `any` can be used as wildcard for defining rules, so it's root ob
 (can? :role/admin :http/get :routes/admin) => true
 (can? :role/user  :http/get :routes/admin) => false
 ```
-Entities hierarchy is stored in atom called `relations`:
+
+Entities hierarchy can be retrieved with `relations` function, but it's pretty much an implementation detail and it's not recommended to rely on it:
 ```clojure
-@relations
+(zkn/relations)
 => {:parents {:role/any #{:zakon.core/any}, :role/user #{:role/any}, :role/admin #{:role/user}, :http/any #{:zakon.core/any}, :http/get #{:http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any}, :routes/admin #{:routes/any}}, :ancestors {:role/any #{:zakon.core/any}, :role/user #{:zakon.core/any :role/any}, :role/admin #{:zakon.core/any :role/user :role/any}, :http/any #{:zakon.core/any}, :http/get #{:zakon.core/any :http/any}, :routes/any #{:zakon.core/any}, :routes/home #{:routes/any :zakon.core/any}, :routes/admin #{:routes/any :zakon.core/any}}, :descendants {:zakon.core/any #{:routes/any :http/any :routes/home :role/user :role/admin :role/any :http/get :routes/admin}, :role/any #{:role/user :role/admin}, :role/user #{:role/admin}, :http/any #{:http/get}, :routes/any #{:routes/home :routes/admin}}}
 ```
 `inherited?` can be used to check if 2 enities are in child-parent relations:
 ```clojure
-(inherited? :role/admin :role/user) => true
-(inherited? :http/get :http/any) => true
-(inherited? :http/any any) => true
+(zkn/inherited? :role/admin :role/user) => true
+(zkn/inherited? :http/get :http/any) => true
+(zkn/inherited? :http/any any) => true
 ```
 
 ### Turning objects into entities
@@ -189,12 +190,12 @@ Despite any value can be an entity, that's impractical to define rule like this:
 Such rules are very generic and resolver function quickly becomes cumbersome.
 We can separate rule declaration and getting data required for rule checking from domain objects using `Entity` protocol, so rule from example above can be rewritten:
 ```clojure
-(extend-protocol z/Entity
+(extend-protocol zkn/Entity
   User
-  (z/as-actor [{:keys [role]}] role)
+  (zkn/as-actor [{:keys [role]}] role)
 
   Content
-  (z/as-subject [{:keys [type]}] type))
+  (zkn/as-subject [{:keys [type]}] type))
 
 (can! any :create :article)
 (can! :admin any any)
@@ -213,7 +214,7 @@ Policies can contain the same rules with different values, for example:
 (cant! :restrictive-policy :user any any)
 (can! :permissive-policy :user any any)
 
-;; when checking rule, policy is passed as options similarly to context
+;; when checking rule, policy is passed as key :policy in optional 4th argument
 (can? :user :say :hello {:policy :restrictive-policy}) => false
 (can? :user :say :hello {:policy :permissive-policy}) => true
 ```
