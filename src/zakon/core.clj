@@ -8,7 +8,7 @@
   "Global policy"
   ::policy)
 
-(def ^:no-doc relations
+(def ^:no-doc relations-store
   (atom (make-hierarchy)))
 
 (def ^:dynamic *default-result* false)
@@ -31,7 +31,7 @@
 
 (defmulti ^:no-doc dispatch
   (fn [policy actor action subject] [policy actor action subject])
-  :hierarchy relations)
+  :hierarchy relations-store)
 
 (defmethod dispatch
   [global-policy any any any]
@@ -39,10 +39,10 @@
              :source ::default-rule})
 
 (defn- known-entity? [entity]
-  (isa? @relations entity any))
+  (isa? @relations-store entity any))
 
 (defn- known-policy? [policy]
-  (isa? @relations policy global-policy))
+  (isa? @relations-store policy global-policy))
 
 (defn ^:no-doc register-entity!
   [entity]
@@ -51,15 +51,15 @@
           str-any (name any)
           entity-any (keyword ns str-any)]
       (when-not (known-entity? entity-any)
-        (swap! relations derive entity-any any))
+        (swap! relations-store derive entity-any any))
       (when-not (= entity entity-any)
-        (swap! relations derive entity entity-any))))
+        (swap! relations-store derive entity entity-any))))
   entity)
 
 (defn ^:no-doc register-policy!
   [policy]
   (when-not (known-policy? policy)
-    (swap! relations derive policy global-policy))
+    (swap! relations-store derive policy global-policy))
   policy)
 
 (defn- entity-name [v]
@@ -85,14 +85,14 @@
         kw-parent (build-entity parent)]
     (when-not (or (known-entity? kw-parent) (known-policy? kw-parent))
       (register-entity! kw-parent))
-    (swap! relations derive kw-child kw-parent)))
+    (swap! relations-store derive kw-child kw-parent)))
 
 (defn inherited?
   "Checks if given values are in child-parent relation"
   [child parent]
   (let [kw-child (build-entity child)
         kw-parent (build-entity parent)]
-    (isa? @relations kw-child kw-parent)))
+    (isa? @relations-store kw-child kw-parent)))
 
 (defn- -resolve [result actor action subject]
   (cond
@@ -139,6 +139,11 @@
   (->> dispatch
        methods
        keys))
+
+(defn relations
+  "Lists all relations"
+  []
+  @relations-store)
 
 (defmacro defrule
   "Defines rule for given vector of [actor action subject] and result.
@@ -201,11 +206,11 @@
   "Cleanup all rules and relations. Reset everything to initial state."
   []
   (let [rules (-> (rules) count)]
-    (reset! relations (make-hierarchy))
+    (reset! relations-store (make-hierarchy))
     (def dispatch nil)
     (defmulti dispatch
       (fn [policy actor action subject] [policy actor action subject])
-      :hierarchy relations)
+      :hierarchy relations-store)
     (defmethod dispatch [global-policy any any any]
       [_ _ _ _] {:result *default-result*
                  :source ::default-rule})
