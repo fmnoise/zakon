@@ -11,7 +11,7 @@
 (def ^:no-doc relations-store
   (atom (make-hierarchy)))
 
-(def ^:dynamic *default-result* false)
+(def ^:no-doc ^:inline default-result false)
 
 (defprotocol Entity
   (as-actor [_])
@@ -34,7 +34,7 @@
 
 (defmethod dispatch
   [global-policy any any any]
-  [_ _ _ _] {:result *default-result*
+  [_ _ _ _] {:result default-result
              :source ::default-rule})
 
 (defn- known-entity? [entity]
@@ -211,6 +211,6 @@
       (fn [policy actor action subject] [policy actor action subject])
       :hierarchy relations-store)
     (defmethod dispatch [global-policy any any any]
-      [_ _ _ _] {:result *default-result*
+      [_ _ _ _] {:result default-result
                  :source ::default-rule})
     (println rules " rules cleaned")))
