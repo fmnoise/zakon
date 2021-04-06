@@ -149,7 +149,7 @@ Each domain have special value `any` which represents domain root object. All do
 As shown above `any` can be used as wildcard for defining rules, so it's root object for all other entities and all domain roots are inherited from `any`.
 `inherit!` can be used to make child-parent relation for any other object:
 ```clojure
-(inherit! :role/admin :role/user)
+(zkn/inherit! :role/admin :role/user)
 (can! :role/user  :http/get :routes/home)
 (can! :role/admin :http/any :routes/admin)
 
