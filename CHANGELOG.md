@@ -1,3 +1,7 @@
+## 0.3.0
+
+* *BREAKING!* Remove `*policy*`, `*default-result*` and `relations`
+
 ## 0.2.0
 
 * *BREAKING!* Replace context with `Entity` protocol
