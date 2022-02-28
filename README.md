@@ -1,5 +1,16 @@
 # zakon [![CircleCI](https://circleci.com/gh/fmnoise/zakon/tree/master.svg?style=svg)](https://circleci.com/gh/fmnoise/zakon/tree/master) [![cljdoc badge](https://cljdoc.org/badge/zakon/zakon)](https://cljdoc.org/d/zakon/zakon/CURRENT)
 
+### If you support my open source work, please consider donating Ukrainian Army in fighting with Russian agression. We stay for Freedom and peaceful future, let's stop Putin together! 🇺🇦 🙏
+```
+IBAN - UA843000010000000047330992708
+
+BTC - 357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P
+
+ETH - 0x165CD37b4C644C2921454429E7F9358d18A45e14
+
+USDT (trc20) - TEFccmfQ38cZS1DTZVhsxKVDckA8Y6VfCy
+```
+
 > But whoso looketh into the perfect law of liberty, and continueth therein, he being not a forgetful hearer, but a doer of the work, this man shall be blessed in his deed.
 > (James 1:25)
 
