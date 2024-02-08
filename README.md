@@ -1,11 +1,4 @@
-### If you support my open source work, please consider donating Ukrainian Army in fighting with russian agression. We stay for Freedom and peaceful future, let's stop putin together! 🇺🇦 🙏
-```
-IBAN: UA843000010000000047330992708
-BTC: 357a3So9CbsNfBBgFYACGvxxS6tMaDoa1P
-ETH: 0x165CD37b4C644C2921454429E7F9358d18A45e14
-USDT (trc20): TEFccmfQ38cZS1DTZVhsxKVDckA8Y6VfCy
-Apple/Google Pay: https://uahelp.monobank.ua
-```
+### [🇺🇦 If you would like to support my open source work, please consider helping my country to defend freedom and right to exist 🇺🇦](https://stand-with-ukraine.pp.ua/)
 
 # zakon [![CircleCI](https://circleci.com/gh/fmnoise/zakon/tree/master.svg?style=svg)](https://circleci.com/gh/fmnoise/zakon/tree/master) [![cljdoc badge](https://cljdoc.org/badge/zakon/zakon)](https://cljdoc.org/d/zakon/zakon/CURRENT)
 
